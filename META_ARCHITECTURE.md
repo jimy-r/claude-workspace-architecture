@@ -4,7 +4,7 @@
 >
 > **Audience:** anyone curious about how a practical Claude Code workspace is structured end-to-end.
 >
-> **Last updated:** 2026-04-19 — Gmail Automation Stack shipped: new `morning-brief` scheduled task (daily) orchestrates email triage + receipt capture + bill tracking + appointment extraction + local weather brief. Five new Python helpers in `scripts/` (`email_rules.py`, `receipts_pipeline.py`, `bill_tracker.py`, `appointments.py`, `send_self_email.py`) consume an email-rules registry and a services registry. Brief shows appointments for next 14 days + task-list counts + open-questions digest. Delivery: SMTP self-send to the user's own inbox via `send_self_email.py`, with draft fallback. **Narrow Iron Law exception** (2026-04-19): `send_self_email.py` hardcodes recipient as the user's own address and refuses any other; MCP send-email remains ungranted; all other email operations still drafts-only. Earlier same day: inbox cleanup (~25k → 0) across 8 batches; created an email-rules registry (~500 rules, YAML schema, consumer-tagged for bill-monitor/receipt-capture/email-triage/morning-brief/tax-receipts). Earlier same day: added Google Calendar + Google Workspace MCP servers (Calendar full, Gmail readonly, Drive readonly); extended file protection to Google OAuth credentials. 2026-04-18 — extended the services registry into a subscription tracker (new `Next renewal` + `Tax` columns); added a renewals scan to the heartbeat loop. Earlier the same day: added a `developmental-reviser` role + project binding; reorganised a novel project into a new `Books/` group.
+> **Last updated:** 2026-04-20 — **Memory architecture hardening.** Split the always-loaded semantic memory from one-off episodic events via a new `episodes/` subfolder (one-off events — cleanups, migrations, launches — move there and are no longer referenced from the `MEMORY.md` index, keeping the always-loaded prefix small). Added `learned_on` / `last_verified` / `verify_by_checking` YAML frontmatter to all `reference_*.md` memory files so drift is surfaceable. New memory-lint script walks memory + episodes and verifies every referenced file path still exists; runtime-created paths (browser-profile dirs, MCP log folders, OAuth state dirs) allowlisted. New weekly `consolidate-memory` scheduled task does the deeper pass — resolves contradictions against source-of-truth docs, converts relative→absolute dates, merges duplicates, moves stale episodes, keeps `MEMORY.md` under its 200-line ceiling. Four-op discipline per fact (ADD / UPDATE / DELETE / NOOP). The heartbeat agent gained a "Memory lint" step in every cycle. User-global `CLAUDE.md` gained a `Memory hygiene` section codifying dedup-on-write, point-don't-mirror, four-op discipline, and Anthropic's verbatim memory-tool hygiene rule. The `wrap` skill now mirrors every `META_ARCHITECTURE` touch to the public redacted copy and pushes — a drift-prevention habit so the public snapshot never falls behind the private source. Earlier — Gmail Automation Stack shipped: new `morning-brief` scheduled task (daily) orchestrates email triage + receipt capture + bill tracking + appointment extraction + local weather brief. Five new Python helpers in `scripts/` (`email_rules.py`, `receipts_pipeline.py`, `bill_tracker.py`, `appointments.py`, `send_self_email.py`) consume an email-rules registry and a services registry. Brief shows appointments for next 14 days + task-list counts + open-questions digest. Delivery: SMTP self-send to the user's own inbox via `send_self_email.py`, with draft fallback. **Narrow Iron Law exception** (2026-04-19): `send_self_email.py` hardcodes recipient as the user's own address and refuses any other; MCP send-email remains ungranted; all other email operations still drafts-only. Earlier same day: inbox cleanup (~25k → 0) across 8 batches; created an email-rules registry (~500 rules, YAML schema, consumer-tagged for bill-monitor/receipt-capture/email-triage/morning-brief/tax-receipts). Earlier same day: added Google Calendar + Google Workspace MCP servers (Calendar full, Gmail readonly, Drive readonly); extended file protection to Google OAuth credentials. 2026-04-18 — extended the services registry into a subscription tracker (new `Next renewal` + `Tax` columns); added a renewals scan to the heartbeat loop. Earlier the same day: added a `developmental-reviser` role + project binding; reorganised a novel project into a new `Books/` group.
 
 ## Contents
 
@@ -136,6 +136,7 @@ The scheduler itself is **[stock]** (either the Claude Code app's Routines UI or
 | `heartbeat-monitor` | Every 2 hours | Reads task queue, posts clarifying questions, actions cleared tasks, flags stale items. Runs stale-CONTEXT.md scan, stale-PLAN.md scan, roles validator, and upcoming-renewals scan every cycle. **Anti-duplication guard:** before actioning any task, checks project folder state (`PLAN.md` checklist, `git log`, recent file activity, staging folders). If ANY evidence of prior work exists, posts a progress-check question and waits rather than re-scaffolding. |
 | `morning-brief` | Daily (early morning) | Gmail automation orchestrator added 2026-04-19. Runs four pipelines: (1) email triage — applies Gmail actions (label/archive/trash), drafts new-sender proposals; (2) receipt capture — email path + photo path via a drop folder; appends to a ledger workbook; (3) bill & subscription tracker — matches bills against the services registry, logs to an actuals workbook, emits four alert triggers; (4) compose + deliver brief — appointments next 14 days via Calendar MCP + local weather + active task counts + open questions + overnight activity, written to a dated markdown file + sent self-to-self via the narrow-exception SMTP helper with a draft fallback. Appointment extraction runs between (3) and (4). Idempotent. |
 | `upgrade-audit` | Weekly | Runs the full audit agent — Phase 1 global setup, Phase 2 per-project, Phase 2.5a plugin/MCP bloat check, Phase 2.5b external opportunities (web research), Phase 2.6 security review, Phase 3 write recommendations. Writes to the task list under `## Setup Review` and `## Security` sections. |
+| `consolidate-memory` | Weekly | Memory hygiene pass — runs the memory-lint script with `--fix`, resolves contradictions between memory files and source-of-truth docs, converts relative→absolute dates, merges duplicates, moves stale episodes to the `episodes/` subfolder, keeps `MEMORY.md` under its 200-line ceiling. Four-op per fact (ADD / UPDATE / DELETE / NOOP). Iron Laws in memory are never consolidated away. |
 | `check-usage` | Manual | Opens usage dashboard and runs usage stats. |
 | `remote-control` | Manual (disabled) | Disabled — cannot launch from Claude Code due to env inheritance. Use `remote-control.bat` directly. |
 
@@ -238,13 +239,28 @@ All **[stock]**: `general-purpose`, `Explore` (codebase search), `Plan` (archite
 
 **Location:** `<home>/.claude/projects/<workspace-id>/memory/`
 
-**Index:** `MEMORY.md` (always loaded, ~150 chars per entry, max ~200 lines)
+**Index:** `MEMORY.md` — always loaded, ~150 chars per entry, **capped at 200 lines / 25 KB** (matches the Claude Code auto-memory ceiling).
+
+**Subfolder:** `episodes/` — one-off events (cleanups, migrations, launches). NOT referenced from `MEMORY.md`, NOT always loaded; browsed on demand when historical context is needed. Separating episodic from semantic content keeps the always-loaded prefix small and stops date-stamped "we did X" narratives silently masquerading as durable facts.
 
 **Types:**
 - **user** — profile, role, goals, preferences. Tailors how Claude communicates.
 - **feedback** — corrections and validated approaches. Prevents repeated mistakes.
-- **project** — ongoing work, decisions, deadlines. Decays fast — verify before relying.
-- **reference** — pointers to external systems and to internal architecture (this file, the roles library).
+- **project** — durable state, Iron Laws, pointers at source-of-truth docs (`CONTEXT.md`, `PLAN.md`, registries). Prefer pointing over mirroring — the canonical source changes faster than memory, and a copy rots.
+- **reference** — pointers to external systems and to internal architecture (this file, the roles library). Carry `learned_on` / `last_verified` / `verify_by_checking` YAML frontmatter so drift is surfaceable.
+
+### Discipline (workspace-specific rules supplementing the system-prompt auto-memory policy)
+
+- **Dedup on write.** Before creating a new file or appending a fact, grep existing memories — if information overlaps >60%, UPDATE the existing file, don't duplicate.
+- **Point, don't mirror.** If the fact has a canonical home, memory keeps a short pointer, not a copy.
+- **Four-op per fact:** ADD / UPDATE / DELETE / NOOP. Contradictions resolve to one verb, never both.
+- **Verify before asserting from memory.** Memory is a point-in-time snapshot, not live state. A claim that names a file, flag, or service must be verified against the current repo before acting on it.
+- **Anthropic's memory-tool system prompt, verbatim:** *"keep its content up-to-date, coherent and organized. You can rename or delete files that are no longer relevant. Do not create new files unless necessary."*
+
+### Tooling
+
+- **Memory-lint script** (`<workspace>/scripts/memory_lint.py`) — walks the memory directory and `episodes/`, checks every referenced file path exists. `--fix` refreshes `last_verified` on clean pass. `--notes` appends drift to the task list under a dated `## Memory — drift detected <date>` section, idempotent per-line. Runtime-created paths (e.g. browser-profile directories, MCP log folders, OAuth state dirs) are allowlisted so they don't flag. The heartbeat agent invokes the lint in every cycle.
+- **Weekly `consolidate-memory` scheduled task** — the deeper pass. Resolves contradictions between memory and source-of-truth docs, converts relative→absolute dates, merges duplicates, moves decayed episodes into the subfolder, keeps `MEMORY.md` under its ceiling. Iron Laws in memory are never consolidated away. Canonical instructions: `<home>/.claude/scheduled-tasks/consolidate-memory/SKILL.md`.
 
 ---
 
@@ -349,6 +365,9 @@ Supporting folders:
 | Workspace custom skills | `<workspace>/.claude/skills/` |
 | Workspace path-scoped rules | `<workspace>/.claude/rules/` |
 | Memory | `<home>/.claude/projects/<workspace-id>/memory/` |
+| Memory episodes (one-off events) | `<home>/.claude/projects/<workspace-id>/memory/episodes/` |
+| Memory lint script | `<workspace>/scripts/memory_lint.py` |
+| Memory consolidation task | `<home>/.claude/scheduled-tasks/consolidate-memory/SKILL.md` |
 | Task coordination | `<workspace>/tasks/` |
 | Google OAuth creds + tokens (hook-protected) | `<home>/.claude/google-auth/` |
 | Encrypted backup | S3-compatible object storage, via `restic`; credentials pulled from the password-manager CLI |
