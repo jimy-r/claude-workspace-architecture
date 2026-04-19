@@ -1,0 +1,362 @@
+# Claude Workspace — Meta Architecture *(redacted)*
+
+> **Scope:** how a personal `Claude` workspace is wired *for Claude*. Personas, routines, hooks, memory, and the coordination layer between them. **Not** the architecture of any individual project inside it — project application architecture lives alongside each project.
+>
+> **Audience:** anyone curious about how a practical Claude Code workspace is structured end-to-end.
+>
+> **Last updated:** 2026-04-19 — Gmail Automation Stack shipped: new `morning-brief` scheduled task (daily) orchestrates email triage + receipt capture + bill tracking + appointment extraction + local weather brief. Five new Python helpers in `scripts/` (`email_rules.py`, `receipts_pipeline.py`, `bill_tracker.py`, `appointments.py`, `send_self_email.py`) consume an email-rules registry and a services registry. Brief shows appointments for next 14 days + task-list counts + open-questions digest. Delivery: SMTP self-send to the user's own inbox via `send_self_email.py`, with draft fallback. **Narrow Iron Law exception** (2026-04-19): `send_self_email.py` hardcodes recipient as the user's own address and refuses any other; MCP send-email remains ungranted; all other email operations still drafts-only. Earlier same day: inbox cleanup (~25k → 0) across 8 batches; created an email-rules registry (~500 rules, YAML schema, consumer-tagged for bill-monitor/receipt-capture/email-triage/morning-brief/tax-receipts). Earlier same day: added Google Calendar + Google Workspace MCP servers (Calendar full, Gmail readonly, Drive readonly); extended file protection to Google OAuth credentials. 2026-04-18 — extended the services registry into a subscription tracker (new `Next renewal` + `Tax` columns); added a renewals scan to the heartbeat loop. Earlier the same day: added a `developmental-reviser` role + project binding; reorganised a novel project into a new `Books/` group.
+
+---
+
+## 1. Layers at a glance
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  USER ENTRY POINTS                                                   │
+│  Terminal (launcher .bat)    Remote chat channel    Voice (web UI)   │
+└──────────────────────────────────────────────────────────────────────┘
+                                  │
+┌──────────────────────────────────────────────────────────────────────┐
+│  CLAUDE SESSION                                                      │
+│  CLAUDE.md (always-loaded context, project + global)                 │
+│  Memory (auto-loaded user/feedback/project/reference)                │
+│  Hooks (PreToolUse, PostToolUse, SessionStart, Notification)         │
+└──────────────────────────────────────────────────────────────────────┘
+                                  │
+        ┌─────────────────────────┼─────────────────────────┐
+        │                         │                         │
+   ┌────────────┐         ┌────────────┐            ┌──────────────┐
+   │  PERSONAS  │         │  ROUTINES  │            │     MCP      │
+   │  (roles/)  │         │  (cron +   │            │   SERVERS    │
+   │  + project │         │   launcher │            │              │
+   │  bindings  │         │   .bat)    │            │              │
+   └────────────┘         └────────────┘            └──────────────┘
+        │                         │                         │
+        ▼                         ▼                         ▼
+   Subagents               Heartbeat agent           voice channel
+   composed with           Audit agent               remote chat
+   project CONTEXT.md      Upgrade-audit             scheduled tasks
+                                                     directory access
+                                                     browser automation
+                                                     preview server
+                                                     registry search
+```
+
+---
+
+## 2. Personas — the Roles Library
+
+**Library:** `<workspace>/roles/` — 16 pure, reusable canonical role definitions, each with a fixed schema (frontmatter + Identity / Directives / Constraints / Method / Output format / Red Flags / Rationalization Table).
+
+**Canonical roles (16):** `accountant`, `backend-developer`, `bookkeeper`, `data-engineer`, `developmental-editor`, `developmental-reviser`, `frontend-developer`, `health-data-analyst`, `learning-strategist`, `llm-engineer`, `nutritionist`, `platform-engineer`, `product-thinker`, `security-auditor`, `tester`, `wealth-manager`.
+
+**Composition:** each project has thin subagent bindings under `.claude/agents/` that compose a canonical role with the project's `CONTEXT.md` (entity facts) via `@` includes.
+
+**Rule:** roles are pure (no entity facts). Entity facts live in each project's `CONTEXT.md`.
+
+**Validation:** a roles validator script checks frontmatter schema + binding composition. Runs every heartbeat cycle; exit non-zero surfaces a question.
+
+| Project type | Bindings (illustrative) | Context source |
+|---|---|---|
+| Personal finance | accountant / wealth-manager / bookkeeper | project `CONTEXT.md` |
+| Software product | backend / frontend / tester / security / llm / product | project `CONTEXT.md` |
+| Personal health | health-analyst / nutritionist | project context file |
+| Creative writing | developmental-editor / developmental-reviser | project `CONTEXT.md` |
+| Education | learning-strategist | project `CONTEXT.md` |
+
+**Not yet bound to any project:** `data-engineer`, `platform-engineer`.
+
+**See also:** a `roles/README.md` with the schema and binding quick-reference; a `roles/_template.md` for new roles.
+
+---
+
+## 3. Routines — recurring agents and one-shot launchers
+
+### Entry points — Claude Code app
+
+Previously the workspace was driven from a handful of terminal windows, each one launched by a `.bat` script and holding its own Claude session. The Claude Code desktop app now unifies that surface:
+
+- **Routines** — the app's built-in scheduler — replace most launcher `.bat` files for recurring work. Terminal launchers are retained only for flows that need specific env-var hygiene or direct shell control.
+- **Persistent parallel sessions** are the main win. The app holds many independent sessions open side-by-side, each anchored to a different workstream; the user actions whichever is ready. At the time of writing: 9 sessions cycled through earlier the same day, with ~50 agents and subagents running concurrently across them — each a different thread (bug fix, document edit, research query, project scaffold).
+
+Net effect: less context-swap tax. Each thread stays warm; the user returns to it when it's useful rather than reconstructing state every time.
+
+### Launcher scripts (`<workspace>/scripts/`)
+
+| Script | Purpose |
+|---|---|
+| `launch-claude.bat` | Bootstrap launcher with CLAUDE.md sanity check across all project folders. Primary entry point for terminal sessions. Delegates to `_bootstrap-check.bat`. |
+| `_bootstrap-check.bat` | Shared subroutine. Scans project folders for missing CLAUDE.md files and offers to create stubs. Called by the other launchers. |
+| `remote-control.bat` | Starts a Claude session with Remote Control enabled. Bootstrap check + interactive session. Must be double-clicked — cannot be invoked from within Claude Code (env inheritance issue). |
+| `voice-channel.bat` | Kills any stale process on the voice port, then launches the voice-channel MCP server. |
+| `shopping-chrome.bat` | Launches Chrome with remote debugging port and a dedicated profile. Persists store logins across automation sessions. Used by a personal shopping-agent project. |
+| `check-usage.bat` | Opens the Claude usage dashboard and runs a usage-stats CLI to show current 5-hour window burn rate. |
+| `audit.bat` | Runs the audit agent — reviews configs, hooks, CLAUDE.md quality, test coverage, security; writes recommendations to the task list. |
+| `backup-restic.ps1` (+ `.bat` launcher) | Manual encrypted backup of the workspace to an S3-compatible object-storage target via `restic`. Client-side encryption — provider only ever sees ciphertext. Repo password + storage credentials pulled from the password-manager CLI at runtime (no secrets in the script or any synced file). Dedup + incremental + granular file-level restore. Retention: 7 daily + 4 weekly + 6 monthly. |
+| `restic-verify.ps1` (+ `.bat` launcher) | One-shot verification: lists snapshots, runs a read-data integrity check, performs a file-level restore round-trip and SHA256-diffs against source. Use before relying on the backup for recovery. |
+| `backup-excludes.txt` | Exclude patterns for the backup (`.venv`, `node_modules`, `__pycache__`, etc.). |
+| `email_rules.py` | **Gmail Automation Stack — Phase 1.** YAML parser + validator + matcher for the email-rules registry (~500 rules across 5 consumer tags: `bill-monitor`, `receipt-capture`, `email-triage`, `morning-brief`, `tax-receipts`). Handles `extends` inheritance, `senders: [...]` list expansion, split `action: {future:…, historical:…}`. Most-specific-wins matching. CLI: `validate`, `stats`, `index`, `match`, `match-batch`, `draft-rule`. |
+| `receipts_pipeline.py` | **Gmail Automation Stack — Phase 2.** Receipt ingestion: schema validation, categorisation, dedup against existing ledger rows, append + save, optional source-file filing. Supports both email-extracted and photo-OCR extracted receipts. |
+| `bill_tracker.py` | **Gmail Automation Stack — Phase 3.** Parses the services registry into typed `Service` rows with cost normalised to monthly. Matches incoming bills to services by hint/sender/domain. Appends to an actuals log. Four alert triggers: >20% over-threshold / unknown sender / cancelled-service renewal / duplicate. |
+| `appointments.py` | **Gmail Automation Stack — Phase 5.** Validates extracted appointment payloads, formats for the Calendar MCP `create-event`, generates dedup token embedded in event description. |
+| `send_self_email.py` | **Narrow Iron Law exception (2026-04-19).** The *only* path by which Claude sends email autonomously. Hardcodes recipient as the user's own address and raises a `SelfOnlyViolation` on any other address. Uses SMTP (not MCP) with an app password resolved from env var or OS keychain. Intended solely for morning-brief delivery; all other email operations still go through MCP drafts. |
+
+### Scheduled tasks (`<home>/.claude/scheduled-tasks/`)
+
+| Task | Cadence | Purpose |
+|---|---|---|
+| `heartbeat-monitor` | Every 2 hours | Reads task queue, posts clarifying questions, actions cleared tasks, flags stale items. Runs stale-CONTEXT.md scan, stale-PLAN.md scan, roles validator, and upcoming-renewals scan every cycle. **Anti-duplication guard:** before actioning any task, checks project folder state (`PLAN.md` checklist, `git log`, recent file activity, staging folders). If ANY evidence of prior work exists, posts a progress-check question and waits rather than re-scaffolding. |
+| `morning-brief` | Daily (early morning) | Gmail automation orchestrator added 2026-04-19. Runs four pipelines: (1) email triage — applies Gmail actions (label/archive/trash), drafts new-sender proposals; (2) receipt capture — email path + photo path via a drop folder; appends to a ledger workbook; (3) bill & subscription tracker — matches bills against the services registry, logs to an actuals workbook, emits four alert triggers; (4) compose + deliver brief — appointments next 14 days via Calendar MCP + local weather + active task counts + open questions + overnight activity, written to a dated markdown file + sent self-to-self via the narrow-exception SMTP helper with a draft fallback. Appointment extraction runs between (3) and (4). Idempotent. |
+| `upgrade-audit` | Weekly | Runs the full audit agent — Phase 1 global setup, Phase 2 per-project, Phase 2.5a plugin/MCP bloat check, Phase 2.5b external opportunities (web research), Phase 2.6 security review, Phase 3 write recommendations. Writes to the task list under `## Setup Review` and `## Security` sections. |
+| `check-usage` | Manual | Opens usage dashboard and runs usage stats. |
+| `remote-control` | Manual (disabled) | Disabled — cannot launch from Claude Code due to env inheritance. Use `remote-control.bat` directly. |
+
+> **Note on remote triggers:** Remote triggers run in Anthropic's cloud sandbox and cannot access local workspace files, so they could not do heartbeat/audit jobs that need to read or write locally. Local scheduled-tasks are the canonical path for any routine that needs to touch local files.
+
+### Automated infrastructure (Windows Task Scheduler)
+
+None currently registered. A previous nightly backup job was removed in favour of manual-only invocation (now via the restic script).
+
+> **Note:** Remote Control cannot be launched from within Claude Code. Child processes inherit OAuth env vars that force API mode and break MCP server connections. Use the `remote-control.bat` launcher via double-click or desktop shortcut only.
+
+---
+
+## 4. Hooks — automatic behaviours on events
+
+Configured globally in `<home>/.claude/settings.json`.
+
+| Hook | Trigger | Effect |
+|---|---|---|
+| **PreToolUse** | Before `Edit` or `Write` | Blocks modification of protected files: `.env*`, `credentials*`, `secrets*`, lock files, a few specific sensitive project files, financial result workbooks, bank transaction CSVs, Google OAuth tokens. Path match is case-insensitive. |
+| **PostToolUse** | After `Edit` or `Write` | Auto-formats `.py` with `ruff format` + `ruff check --fix`; auto-formats `.ts/.tsx/.js/.jsx/.mjs/.cjs` with `prettier --write` (if prettier on PATH). |
+| **SessionStart** | After context compaction | A short prompt re-injects context: read the lessons file, check active task list, load path-scoped rules, remember the meta-architecture for structural questions. |
+| **Notification** | On tool result | OS notification (async, brief timeout). |
+
+---
+
+## 5. Skills — invokable capabilities
+
+### Custom workspace skills (`<workspace>/.claude/skills/`)
+
+| Skill | Purpose |
+|---|---|
+| `orient` | Session-start briefing. Reads the meta-architecture, CLAUDE.md, the task set, and freshness-checks project CONTEXT.md / PLAN.md files. Returns active state, in-flight work, open questions, staleness flags, and a recommended next action. |
+| `wrap` | Task close-out ritual. Updates the implementation plan review section, strikes through the matching task-list bullet, resolves linked questions, sweeps registries (command shortcuts, skill/subagent/scheduled-task/launcher/MCP/hook tables, project layout, file protection, memory index, project context, services registry). |
+| `tasks` | Task-queue readout. Parses the task list (active bullets, grouped by section) and the questions file (open questions only). Read-only. Lighter than `orient`. |
+| `verify-completion` | Mandatory self-review gate. Invoke before claiming any implementation task, bug fix, or test/build/lint pass is complete. |
+| `systematic-debugging` | Structured approach to investigating bugs, errors, test failures, or unexpected behaviour when not immediately obvious. |
+| `role-pressure-test` | Adversarial test one role against realistic pressure. Invoke when deploying a new role or significantly modifying an existing role's Constraints / Red Flags / Rationalization Table. |
+| `grocery-run` | **(Stub)** Placeholder for upcoming shopping-agent workflow. |
+
+### Anthropic + plugin skills
+
+User-invocable via `/`. Typical set: `update-config`, `keybindings-help`, `simplify`, `less-permission-prompts`, `loop`, `schedule`, `claude-api`, `pdf`, `docx`, `pptx`, `xlsx`, `consolidate-memory`, `skill-creator`, `setup-cowork`, `init`, `review`, `security-review`.
+
+---
+
+## 6. Subagents — specialised workers
+
+### Workspace custom subagents (`<workspace>/.claude/agents/`)
+
+| Agent | Role |
+|---|---|
+| `audit` | Setup / project / security audit. Read-only except for the task list. Canonical instructions drive both `audit.bat` and the weekly audit scheduled task. |
+| `heartbeat` | Project manager. Runs every 2 hours. Reads/writes task files. Manages the question-then-action loop + anti-duplication guard. |
+
+### Project role bindings (per project, see §2)
+
+Each project directory keeps its own `.claude/agents/` folder with project-scoped bindings.
+
+### Built-in subagent types
+
+`general-purpose`, `Explore` (codebase search), `Plan` (architecture/planning), `claude-code-guide`, `statusline-setup`, plus the two workspace-custom ones above.
+
+---
+
+## 7. MCP servers — external capability bridges
+
+| Server | Type | Purpose |
+|---|---|---|
+| `voice-channel` | Local stdio (Bun) | Browser-based voice/text web UI for Claude Code. Self-signed HTTPS on LAN. |
+| Remote chat channel | Plugin | Task dispatch from a chat client. |
+| `scheduled-tasks` | Built-in | Create/list/update scheduled tasks. |
+| Directory access | Built-in | Request access to host directories outside CWD. |
+| Browser automation | Built-in | Tabs, screenshots, DOM, network. |
+| Preview server | Built-in | For dev work (start/stop, console, network, screenshots). |
+| Registry search | Built-in | Search and suggest connectors from the MCP registry. |
+| GitHub | Plugin | Native GitHub issue/PR/CI tools. |
+| TypeScript LSP | Plugin | Diagnostics, go-to-definition, find-references after edits. |
+| Context7 | Plugin | Real-time, version-specific documentation from source repos. |
+| Google Calendar | Local stdio (npm global) | Google Calendar read+write. OAuth creds + tokens in a protected local folder. Workspace-scoped. |
+| Google Workspace | Local stdio (uvx) | Gmail + Drive read-only. Shares the same OAuth client as the Calendar server. Workspace-scoped. |
+
+---
+
+## 8. Memory system — persistent context across sessions
+
+**Location:** `<home>/.claude/projects/<workspace-id>/memory/`
+
+**Index:** `MEMORY.md` (always loaded, ~150 chars per entry, max ~200 lines)
+
+**Types:**
+- **user** — profile, role, goals, preferences. Tailors how Claude communicates.
+- **feedback** — corrections and validated approaches. Prevents repeated mistakes.
+- **project** — ongoing work, decisions, deadlines. Decays fast — verify before relying.
+- **reference** — pointers to external systems and to internal architecture (this file, the roles library).
+
+---
+
+## 9. Task coordination layer
+
+All in `<workspace>/tasks/`:
+
+| File | Owner | Purpose |
+|---|---|---|
+| `HEARTBEAT.md` | static | Heartbeat agent's operational instructions (question format, execution rules, task categories). |
+| `To Do Notes.md` | user-written | Master task list. Heartbeat reads, asks questions, marks complete. |
+| `To Do Questions.md` | heartbeat | Q&A tracker. Heartbeat posts questions inline; user answers inline; heartbeat picks up answers next cycle. |
+| `todo.md` | claude (per task) | Current implementation plan with checkable items. Review section appended on completion. |
+| `lessons.md` | claude (after corrections) | Self-improvement loop. Rules to prevent repeated mistakes. Loaded at session start. |
+
+**Workflow:** user adds raw note to the task list → heartbeat posts clarifying questions → user answers inline → heartbeat actions the cleared task on next cycle.
+
+### Command Shortcuts
+
+A verbal-shortcut table in the workspace CLAUDE.md maps common user phrases to exact destination files so the agent doesn't have to guess as the folder structure grows. Covers things like "add to tasks", "add to food", "add to pantry", "book me…", "expense this", etc.
+
+Rules:
+- When a user phrase matches the table, go directly to the target — no clarifying question.
+- A new shortcut emerges? Agent asks once, then adds it to the table so the shortcut works next time.
+- Genuine ambiguity between two targets → ask rather than guess.
+
+---
+
+## 10. File protection / safety
+
+**Hook-blocked patterns** (PreToolUse, blocks `Edit`/`Write`, case-insensitive path match):
+- `.env*` — environment variables and secrets
+- `credentials*`, `secrets*` — API keys
+- Lock files (language dependency locks)
+- A small number of agent-core files (heartbeat operational doc, a personal-health profile)
+- Google OAuth client + token files
+- Financial result workbooks
+- Bank transaction CSV records
+
+**Encrypted backup:** S3-compatible object storage via `restic` — client-side encryption, provider only ever sees ciphertext. Repo password + storage credentials retrieved from the password-manager CLI at runtime (no plaintext secrets in any script or synced file). Dedup + incremental + granular file-level restore. Retention: 7 daily + 4 weekly + 6 monthly.
+
+### Credential store — password manager (canonical)
+
+A commercial password manager is the authoritative store for every credential touched by this workspace. No plaintext credentials live in files, ever — not in `.env` (those are machine-local runtime configs and hook-protected), not in scripts, not in CLAUDE.md, not in CONTEXT.md, not in this file.
+
+**Vault structure:** folders mirror the services-registry categories (personal and project-scoped).
+
+**Master password + account recovery code:** stored offline in a physically secured location, separate from any digital copy. Recovery code regenerated annually or on suspected exposure.
+
+**Index:** the services registry is the plaintext index — every service entry points at a password-manager item by name. When an agent needs a credential, it surfaces the item name; the user retrieves it manually.
+
+**Audit integration:** the weekly audit scans the services registry and flags missing 2FA, stale rotations (>12 months), unresolved placeholders, and new `.env` keys not recorded in the registry.
+
+---
+
+## 11. Project layout
+
+The workspace hosts a handful of parallel projects (a software product, a set of personal-admin folders, health records, a creative-writing project, a few ongoing personal-assistant experiments). Each is kept in its own folder with its own `CLAUDE.md`, `CONTEXT.md`, and — where relevant — a `PLAN.md`. Only a subset have role bindings today; the rest run on the main thread or generic subagents until their workflows stabilise.
+
+Supporting folders:
+- `roles/` — canonical persona library
+- `scripts/` — launcher `.bat` files + backup PowerShell + the Gmail Automation Stack helpers
+- `tasks/` — task coordination layer + one-off implementation plans
+- `Reference/` — reference material (services registry, email-rules registry, shared docs)
+
+---
+
+## 12. Where things live (quick reference)
+
+| Thing | Path |
+|---|---|
+| Workspace meta-architecture (this file, in the source workspace) | `<workspace>/META_ARCHITECTURE.md` |
+| Workspace working context | `<workspace>/CLAUDE.md` |
+| Global working context | `<home>/.claude/CLAUDE.md` |
+| Roles library | `<workspace>/roles/` |
+| Project role bindings | `<project>/.claude/agents/` |
+| Project entity context | `<project>/CONTEXT.md` |
+| Project plans | `<project>/PLAN.md` (for multi-phase projects) |
+| Launchers + bootstrap + backup | `<workspace>/scripts/` |
+| Scheduled tasks | `<home>/.claude/scheduled-tasks/` |
+| Global hooks + settings | `<home>/.claude/settings.json` |
+| Workspace permissions (local) | `<workspace>/.claude/settings.local.json` |
+| Workspace custom agents | `<workspace>/.claude/agents/` (audit, heartbeat) |
+| Workspace custom skills | `<workspace>/.claude/skills/` |
+| Workspace path-scoped rules | `<workspace>/.claude/rules/` |
+| Memory | `<home>/.claude/projects/<workspace-id>/memory/` |
+| Task coordination | `<workspace>/tasks/` |
+| Google OAuth creds + tokens (hook-protected) | `<home>/.claude/google-auth/` |
+| Encrypted backup | S3-compatible object storage, via `restic`; credentials pulled from the password-manager CLI |
+| Services registry | `<workspace>/Reference/services-registry.md` |
+| Email rules registry | `<workspace>/Reference/email-rules.md` |
+| Credentials | password-manager vault (NOT in any file) |
+
+---
+
+## 13. Maintenance
+
+This file is the source of truth for the *meta* shape of the workspace. Update it when:
+
+- A new persona/role is added or removed
+- A new project gets role bindings (or an existing one loses them)
+- A new launcher script, scheduled task, hook, or MCP server is added
+- The memory taxonomy changes
+- A protected-file pattern is added to the safety hook
+- A new top-level project folder is created
+
+**Do not** put project-specific application architecture here — that belongs in the project's own architecture doc.
+
+---
+
+## 14. Planned future upgrades
+
+Drawn from the live task list and implementation-plan file as of 2026-04-19. Items already shipped are not listed.
+
+### AI / workspace upgrades
+
+- **Improved voice integration** — replace browser STT + TTS; candidates: a hosted high-quality TTS (for natural voice), a hosted streaming STT (for better accuracy/latency); wake-word / always-listening mode scope TBD
+- **Bittorrent integration** — scope TBD (media server stack / public-domain ebook fetcher / general download manager)
+- **Home integration** — scope TBD (Home Assistant or direct smart-home device integration; potential tie-in with health data — sleep-room temp, morning light)
+- **Job scanner** — scope TBD (career scanner across major boards, grants/RFP scanner, or similar)
+- **Subagent-driven-development + dispatching-parallel-agents skills** — install from an open-source "superpowers" skill pack to codify a subagent-first philosophy
+- **`PreCompact` hook** — add to selected project settings to prevent loss of in-flight state during long tasks
+- **1-hour prompt-cache TTL env var** — set in launcher scripts for 1-hour cache TTL vs default 5-min (materially cuts token spend)
+
+### Containerisation — sandbox for external-facing agents
+
+Any agent that interacts with the open web — browser automation, web scraping, telephony integrations, retailer checkouts — is being moved behind a container boundary. The goal is security isolation of risky operations, **not** reproducibility; interactive Claude Code dev sessions continue to run on the host unchanged.
+
+**Pattern:**
+- Shared `agent-sandbox` base image (browser + agent runtime + minimal tooling), with per-project `docker-compose.yml` layered on top.
+- Agent and the browser it drives are co-located in the same container so automated traffic stays internal.
+- Credentials passed in at runtime via the password-manager CLI; never baked into the image.
+- Per-project persisted browser profile — store logins survive between runs, and the agent looks like a real user rather than a headless bot (sidesteps most storefront bot-detection).
+
+**Blast radius:** the container cannot see `.env` files, the personal finance folder, the credential-manager state, or any unrelated project directories. Only what the compose file explicitly mounts is reachable from inside.
+
+**Rollout:**
+- The shopping agent is the pilot — its `PLAN.md` already includes a "Phase 1b — container isolation" block.
+- The appointments agent and reselling pipeline inherit the same pattern when their next phases activate.
+- Status: plan drafted, Docker installable on host, not yet implemented.
+
+### Personal projects (scaffolded, awaiting build-out)
+
+- **Shopping agent** — Phase 1b: container isolation (sandbox for browser automation); Phase 2-4: add additional retailers + pantry awareness (agent proactively suggests based on household consumption). Currently blocked on a prepaid-card setup by the user.
+- **Appointments agent** — Phase 1: online booking via browser automation (now unblocked by Google Calendar); Phase 2: phone calling via a hosted voice clone + telephony provider; Phase 3: proactive scheduling (agent books recurring checkups)
+- **Reselling pipeline** — Phase 2: agent-executed listing and payment acceptance; Phase 3: sales analytics + listing optimisation
+
+### Health
+
+- **Fitness log** — structure decision pending (spreadsheet mirroring existing nutrition tracker / smartwatch sync / voice-channel freeform log)
+- **Health-device rollout** — BP monitor → smartwatch → smart scale → CGM, staggered
+
+### Structural / quality
+
+- **Python unit tests for admin scripts** — cover categorisation + workbook update + extract scripts for regression protection on financial data
+- **Path-scoped rules for the personal-finance folder** — bank-code conventions, FY conventions, xlsx write guards
+- **Extend PreToolUse hook to cover more health data** — pathology, medication, immunisations folders; tracking workbooks
