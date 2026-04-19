@@ -4,9 +4,12 @@ A blueprint for a personal [Claude Code](https://claude.com/claude-code) workspa
 
 ## Three ways in
 
-- **[META_ARCHITECTURE.md](META_ARCHITECTURE.md)** — the full structural reference (~400 lines, with diagrams).
-- **[ADOPTION.md](ADOPTION.md)** — a 5-step walkthrough for setting up a similar workspace, minimum-viable at each step.
-- **[samples/](samples/)** — schematic scaffold files (CLAUDE.md and CONTEXT.md templates, a canonical role, a project binding, a custom skill, a hook config, a task list) you can fork and adapt.
+Following the [Diátaxis](https://diataxis.fr/) framing, the repo's docs split across four quadrants:
+
+- **[ADOPTION.md](ADOPTION.md)** — *tutorial*. A 5-step walkthrough for setting up a similar workspace, minimum-viable at each step. Start here if you want to build.
+- **[samples/](samples/)** — *how-to*. Schematic scaffold files (CLAUDE.md and CONTEXT.md templates, a canonical role, a project binding, a custom skill, a hook config, a task list) you fork and adapt task-by-task.
+- **[META_ARCHITECTURE.md](META_ARCHITECTURE.md)** — *reference*. The full structural map (~400 lines, with Mermaid diagrams). Read when you need to look up how a layer works.
+- The prose throughout README + `CONTRIBUTING.md` — *explanation*. Why the shape is the way it is.
 
 ## Who this is for
 
@@ -73,6 +76,9 @@ Three surfaces, pick the right one:
 - [SUPPORT.md](SUPPORT.md) — where to go for what (adaptation, bugs, Q&A)
 - [STYLE_GUIDE.md](STYLE_GUIDE.md) — writing and formatting conventions
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — project norms, reporting path
+- [SECURITY.md](SECURITY.md) — security reporting routes (privacy leaks, workflow vulns)
+- [CHANGELOG.md](CHANGELOG.md) — human-written record of notable changes
+- [ATTRIBUTION.md](ATTRIBUTION.md) — credit for the patterns this repo borrows from
 
 ## License
 
