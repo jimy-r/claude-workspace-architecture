@@ -2,11 +2,15 @@
 
 A blueprint for a personal [Claude Code](https://claude.com/claude-code) workspace — personas, routines, hooks, skills, MCP servers, memory, and task coordination.
 
-The full document lives in [`META_ARCHITECTURE.md`](META_ARCHITECTURE.md).
+## Three ways in
+
+- **[META_ARCHITECTURE.md](META_ARCHITECTURE.md)** — the full structural reference (~400 lines, with diagrams).
+- **[ADOPTION.md](ADOPTION.md)** — a 5-step walkthrough for setting up a similar workspace, minimum-viable at each step.
+- **[samples/](samples/)** — schematic scaffold files (a role, a project binding, a skill, a hook config, a task list) you can fork and adapt.
 
 ## What's in the doc
 
-A description of how a single working directory can host:
+How a single working directory can host:
 
 - **Roles library** — 16 canonical expert personas that compose with project-specific `CONTEXT.md` files via thin subagent bindings
 - **Launcher scripts + scheduled routines** — the `.bat` layer that bootstraps sessions, plus the Claude Code app's Routines feature that is progressively replacing them
@@ -18,6 +22,8 @@ A description of how a single working directory can host:
 - **Task coordination layer** — a question-then-action loop between the user and the heartbeat agent, backed by a small set of markdown files
 - **Hardening** — a password-manager vault as the canonical credential store, `restic` backups to S3-compatible storage, and container sandboxing for external-facing agents
 
+Tables in the doc use `[stock]` / `[plugin]` / `[local]` / `[custom]` markers so you can see what ships with Claude Code vs what someone had to write.
+
 ## Why it's shared
 
 Nothing in here is proprietary or novel — it's just one working arrangement of the pieces Claude Code already provides. Published because a few people have asked how the whole thing fits together, and a single document is easier to hand over than a verbal tour.
@@ -27,6 +33,11 @@ Nothing in here is proprietary or novel — it's just one working arrangement of
 - This is a **snapshot**, not a maintained product. The source workspace evolves; this copy may drift.
 - Paths in the doc are generic (`<workspace>`, `<home>`) — any concrete setup will substitute its own.
 - Nothing here executes on its own; the doc describes structure, not runnable tooling.
+
+## Reference
+
+- [Claude Code documentation](https://docs.claude.com/en/docs/claude-code/overview)
+- Individual feature pages linked inline throughout `META_ARCHITECTURE.md`
 
 ## License
 

@@ -6,45 +6,58 @@
 >
 > **Last updated:** 2026-04-19 — Gmail Automation Stack shipped: new `morning-brief` scheduled task (daily) orchestrates email triage + receipt capture + bill tracking + appointment extraction + local weather brief. Five new Python helpers in `scripts/` (`email_rules.py`, `receipts_pipeline.py`, `bill_tracker.py`, `appointments.py`, `send_self_email.py`) consume an email-rules registry and a services registry. Brief shows appointments for next 14 days + task-list counts + open-questions digest. Delivery: SMTP self-send to the user's own inbox via `send_self_email.py`, with draft fallback. **Narrow Iron Law exception** (2026-04-19): `send_self_email.py` hardcodes recipient as the user's own address and refuses any other; MCP send-email remains ungranted; all other email operations still drafts-only. Earlier same day: inbox cleanup (~25k → 0) across 8 batches; created an email-rules registry (~500 rules, YAML schema, consumer-tagged for bill-monitor/receipt-capture/email-triage/morning-brief/tax-receipts). Earlier same day: added Google Calendar + Google Workspace MCP servers (Calendar full, Gmail readonly, Drive readonly); extended file protection to Google OAuth credentials. 2026-04-18 — extended the services registry into a subscription tracker (new `Next renewal` + `Tax` columns); added a renewals scan to the heartbeat loop. Earlier the same day: added a `developmental-reviser` role + project binding; reorganised a novel project into a new `Books/` group.
 
+## Contents
+
+1. [Layers at a glance](#1-layers-at-a-glance)
+2. [Personas — the Roles Library](#2-personas--the-roles-library)
+3. [Routines — recurring agents and one-shot launchers](#3-routines--recurring-agents-and-one-shot-launchers)
+4. [Hooks — automatic behaviours on events](#4-hooks--automatic-behaviours-on-events)
+5. [Skills — invokable capabilities](#5-skills--invokable-capabilities)
+6. [Subagents — specialised workers](#6-subagents--specialised-workers)
+7. [MCP servers — external capability bridges](#7-mcp-servers--external-capability-bridges)
+8. [Memory system — persistent context across sessions](#8-memory-system--persistent-context-across-sessions)
+9. [Task coordination layer](#9-task-coordination-layer)
+10. [File protection / safety](#10-file-protection--safety)
+11. [Project layout](#11-project-layout)
+12. [Where things live (quick reference)](#12-where-things-live-quick-reference)
+13. [Maintenance](#13-maintenance)
+14. [Planned future upgrades](#14-planned-future-upgrades)
+
+Companion docs: [ADOPTION.md](ADOPTION.md) — 5-step walkthrough for setting up a similar workspace · [samples/](samples/) — scaffold files illustrating each layer.
+
+## Conventions
+
+- **`<workspace>`** / **`<home>`** / **`<project>`** are placeholders; substitute your own paths.
+- Type markers in tables:
+  - **[stock]** — ships with Claude Code out of the box
+  - **[plugin]** — installed via a plugin
+  - **[local]** — local external install (npm global, uvx, standalone binary)
+  - **[custom]** — written for this workspace
+
 ---
 
 ## 1. Layers at a glance
 
+```mermaid
+flowchart TB
+    E["User entry points<br/>Terminal · Remote chat · Voice UI"]
+    S["Claude session<br/>CLAUDE.md · Memory · Hooks"]
+    P["Personas<br/>roles/ + project bindings<br/>(subagents composed with CONTEXT.md)"]
+    R["Routines<br/>scheduled tasks + launcher scripts<br/>(heartbeat, audit, upgrade-audit)"]
+    M["MCP servers<br/>voice · remote chat · scheduled-tasks ·<br/>directory · browser · preview · registry ·<br/>Calendar · Workspace"]
+    E --> S
+    S --> P
+    S --> R
+    S --> M
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│  USER ENTRY POINTS                                                   │
-│  Terminal (launcher .bat)    Remote chat channel    Voice (web UI)   │
-└──────────────────────────────────────────────────────────────────────┘
-                                  │
-┌──────────────────────────────────────────────────────────────────────┐
-│  CLAUDE SESSION                                                      │
-│  CLAUDE.md (always-loaded context, project + global)                 │
-│  Memory (auto-loaded user/feedback/project/reference)                │
-│  Hooks (PreToolUse, PostToolUse, SessionStart, Notification)         │
-└──────────────────────────────────────────────────────────────────────┘
-                                  │
-        ┌─────────────────────────┼─────────────────────────┐
-        │                         │                         │
-   ┌────────────┐         ┌────────────┐            ┌──────────────┐
-   │  PERSONAS  │         │  ROUTINES  │            │     MCP      │
-   │  (roles/)  │         │  (cron +   │            │   SERVERS    │
-   │  + project │         │   launcher │            │              │
-   │  bindings  │         │   .bat)    │            │              │
-   └────────────┘         └────────────┘            └──────────────┘
-        │                         │                         │
-        ▼                         ▼                         ▼
-   Subagents               Heartbeat agent           voice channel
-   composed with           Audit agent               remote chat
-   project CONTEXT.md      Upgrade-audit             scheduled tasks
-                                                     directory access
-                                                     browser automation
-                                                     preview server
-                                                     registry search
-```
+
+Three surfaces sit above the Claude session (entry points), three sit below (personas, routines, MCP). Each section from §2 onward details one slice.
 
 ---
 
 ## 2. Personas — the Roles Library
+
+> See also: [Claude Code subagents documentation](https://docs.claude.com/en/docs/claude-code/sub-agents).
 
 **Library:** `<workspace>/roles/` — 16 pure, reusable canonical role definitions, each with a fixed schema (frontmatter + Identity / Directives / Constraints / Method / Output format / Red Flags / Rationalization Table).
 
@@ -53,6 +66,17 @@
 **Composition:** each project has thin subagent bindings under `.claude/agents/` that compose a canonical role with the project's `CONTEXT.md` (entity facts) via `@` includes.
 
 **Rule:** roles are pure (no entity facts). Entity facts live in each project's `CONTEXT.md`.
+
+```mermaid
+flowchart LR
+    role["Canonical role<br/>roles/security-auditor.md<br/>(pure, no entity facts)"]
+    ctx["Project CONTEXT.md<br/>(entity facts: stack, paths, decisions)"]
+    binding["Thin binding<br/>project/.claude/agents/<br/>project-security.md<br/>(role + CONTEXT via @ includes)"]
+    call["@project-security<br/>invocable subagent"]
+    role --> binding
+    ctx --> binding
+    binding --> call
+```
 
 **Validation:** a roles validator script checks frontmatter schema + binding composition. Runs every heartbeat cycle; exit non-zero surfaces a question.
 
@@ -66,7 +90,7 @@
 
 **Not yet bound to any project:** `data-engineer`, `platform-engineer`.
 
-**See also:** a `roles/README.md` with the schema and binding quick-reference; a `roles/_template.md` for new roles.
+**See also:** a `roles/README.md` with the schema and binding quick-reference; a `roles/_template.md` for new roles. A filled-in example lives at [`samples/roles/example-security-auditor.md`](samples/roles/example-security-auditor.md).
 
 ---
 
@@ -82,6 +106,8 @@ Previously the workspace was driven from a handful of terminal windows, each one
 Net effect: less context-swap tax. Each thread stays warm; the user returns to it when it's useful rather than reconstructing state every time.
 
 ### Launcher scripts (`<workspace>/scripts/`)
+
+All entries below are **[custom]**.
 
 | Script | Purpose |
 |---|---|
@@ -103,6 +129,8 @@ Net effect: less context-swap tax. Each thread stays warm; the user returns to i
 
 ### Scheduled tasks (`<home>/.claude/scheduled-tasks/`)
 
+The scheduler itself is **[stock]** (either the Claude Code app's Routines UI or the `scheduled-tasks` MCP). The specific tasks below are **[custom]**.
+
 | Task | Cadence | Purpose |
 |---|---|---|
 | `heartbeat-monitor` | Every 2 hours | Reads task queue, posts clarifying questions, actions cleared tasks, flags stale items. Runs stale-CONTEXT.md scan, stale-PLAN.md scan, roles validator, and upcoming-renewals scan every cycle. **Anti-duplication guard:** before actioning any task, checks project folder state (`PLAN.md` checklist, `git log`, recent file activity, staging folders). If ANY evidence of prior work exists, posts a progress-check question and waits rather than re-scaffolding. |
@@ -123,7 +151,9 @@ None currently registered. A previous nightly backup job was removed in favour o
 
 ## 4. Hooks — automatic behaviours on events
 
-Configured globally in `<home>/.claude/settings.json`.
+> See also: [Claude Code hooks documentation](https://docs.claude.com/en/docs/claude-code/hooks). A sample hook config lives at [`samples/.claude/settings.example.json`](samples/.claude/settings.example.json).
+
+The **mechanism** is **[stock]**; each hook's **command** is **[custom]**. Configured globally in `<home>/.claude/settings.json`.
 
 | Hook | Trigger | Effect |
 |---|---|---|
@@ -136,7 +166,11 @@ Configured globally in `<home>/.claude/settings.json`.
 
 ## 5. Skills — invokable capabilities
 
+> See also: [Claude Code skills documentation](https://docs.claude.com/en/docs/claude-code/skills). A sample custom skill lives at [`samples/.claude/skills/orient/SKILL.md`](samples/.claude/skills/orient/SKILL.md).
+
 ### Custom workspace skills (`<workspace>/.claude/skills/`)
+
+All entries below are **[custom]**.
 
 | Skill | Purpose |
 |---|---|
@@ -150,13 +184,17 @@ Configured globally in `<home>/.claude/settings.json`.
 
 ### Anthropic + plugin skills
 
-User-invocable via `/`. Typical set: `update-config`, `keybindings-help`, `simplify`, `less-permission-prompts`, `loop`, `schedule`, `claude-api`, `pdf`, `docx`, `pptx`, `xlsx`, `consolidate-memory`, `skill-creator`, `setup-cowork`, `init`, `review`, `security-review`.
+All entries below are **[stock]** or **[plugin]** (shipped by Anthropic or available as plugins). User-invocable via `/`. Typical set: `update-config`, `keybindings-help`, `simplify`, `less-permission-prompts`, `loop`, `schedule`, `claude-api`, `pdf`, `docx`, `pptx`, `xlsx`, `consolidate-memory`, `skill-creator`, `setup-cowork`, `init`, `review`, `security-review`.
 
 ---
 
 ## 6. Subagents — specialised workers
 
+> See also: [Claude Code subagents documentation](https://docs.claude.com/en/docs/claude-code/sub-agents).
+
 ### Workspace custom subagents (`<workspace>/.claude/agents/`)
+
+All entries below are **[custom]**.
 
 | Agent | Role |
 |---|---|
@@ -165,34 +203,38 @@ User-invocable via `/`. Typical set: `update-config`, `keybindings-help`, `simpl
 
 ### Project role bindings (per project, see §2)
 
-Each project directory keeps its own `.claude/agents/` folder with project-scoped bindings.
+Each project directory keeps its own `.claude/agents/` folder with project-scoped bindings — all **[custom]**.
 
 ### Built-in subagent types
 
-`general-purpose`, `Explore` (codebase search), `Plan` (architecture/planning), `claude-code-guide`, `statusline-setup`, plus the two workspace-custom ones above.
+All **[stock]**: `general-purpose`, `Explore` (codebase search), `Plan` (architecture/planning), `claude-code-guide`, `statusline-setup`, plus the two workspace-custom ones above.
 
 ---
 
 ## 7. MCP servers — external capability bridges
 
+> See also: [Claude Code MCP documentation](https://docs.claude.com/en/docs/claude-code/mcp).
+
 | Server | Type | Purpose |
 |---|---|---|
-| `voice-channel` | Local stdio (Bun) | Browser-based voice/text web UI for Claude Code. Self-signed HTTPS on LAN. |
-| Remote chat channel | Plugin | Task dispatch from a chat client. |
-| `scheduled-tasks` | Built-in | Create/list/update scheduled tasks. |
-| Directory access | Built-in | Request access to host directories outside CWD. |
-| Browser automation | Built-in | Tabs, screenshots, DOM, network. |
-| Preview server | Built-in | For dev work (start/stop, console, network, screenshots). |
-| Registry search | Built-in | Search and suggest connectors from the MCP registry. |
-| GitHub | Plugin | Native GitHub issue/PR/CI tools. |
-| TypeScript LSP | Plugin | Diagnostics, go-to-definition, find-references after edits. |
-| Context7 | Plugin | Real-time, version-specific documentation from source repos. |
-| Google Calendar | Local stdio (npm global) | Google Calendar read+write. OAuth creds + tokens in a protected local folder. Workspace-scoped. |
-| Google Workspace | Local stdio (uvx) | Gmail + Drive read-only. Shares the same OAuth client as the Calendar server. Workspace-scoped. |
+| `voice-channel` | Local stdio (Bun) | **[custom]** Browser-based voice/text web UI for Claude Code. Self-signed HTTPS on LAN. |
+| Remote chat channel | Plugin | **[plugin]** Task dispatch from a chat client. |
+| `scheduled-tasks` | Built-in | **[stock]** Create/list/update scheduled tasks. |
+| Directory access | Built-in | **[stock]** Request access to host directories outside CWD. |
+| Browser automation | Built-in | **[stock]** Tabs, screenshots, DOM, network. |
+| Preview server | Built-in | **[stock]** For dev work (start/stop, console, network, screenshots). |
+| Registry search | Built-in | **[stock]** Search and suggest connectors from the MCP registry. |
+| GitHub | Plugin | **[plugin]** Native GitHub issue/PR/CI tools. |
+| TypeScript LSP | Plugin | **[plugin]** Diagnostics, go-to-definition, find-references after edits. |
+| Context7 | Plugin | **[plugin]** Real-time, version-specific documentation from source repos. |
+| Google Calendar | Local stdio (npm global) | **[local]** Google Calendar read+write. OAuth creds + tokens in a protected local folder. Workspace-scoped. |
+| Google Workspace | Local stdio (uvx) | **[local]** Gmail + Drive read-only. Shares the same OAuth client as the Calendar server. Workspace-scoped. |
 
 ---
 
 ## 8. Memory system — persistent context across sessions
+
+> See also: [Claude Code memory documentation](https://docs.claude.com/en/docs/claude-code/memory).
 
 **Location:** `<home>/.claude/projects/<workspace-id>/memory/`
 
@@ -219,6 +261,24 @@ All in `<workspace>/tasks/`:
 | `lessons.md` | claude (after corrections) | Self-improvement loop. Rules to prevent repeated mistakes. Loaded at session start. |
 
 **Workflow:** user adds raw note to the task list → heartbeat posts clarifying questions → user answers inline → heartbeat actions the cleared task on next cycle.
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant Notes as To Do Notes.md
+    participant HB as Heartbeat agent<br/>(every 2h)
+    participant Q as To Do Questions.md
+    User->>Notes: Add raw note
+    Note over HB: Cycle starts
+    HB->>Notes: Read task list
+    HB->>Q: Post clarifying question
+    User->>Q: Answer inline
+    Note over HB: Next cycle
+    HB->>Q: Pick up answer
+    HB->>Notes: Action cleared task, mark complete
+```
+
+A worked example of the task layer lives in [`samples/tasks/`](samples/tasks/).
 
 ### Command Shortcuts
 

@@ -1,0 +1,47 @@
+# `<Your name>`'s workspace
+
+> Always-loaded context that Claude Code reads at session start. Keep it short — every line costs tokens on every turn.
+
+## What this is
+
+A brief description of the working directory. Example:
+
+> Multi-project workspace with personal admin, a side project, health records, and a writing project. Each subdirectory has its own `CLAUDE.md` and `CONTEXT.md`.
+
+## Working principles
+
+- **Simplicity first** — prefer editing existing files; no new abstractions without clear need.
+- **Minimal impact** — only touch what the task requires.
+- **Ask before destructive actions** — delete, force-push, mass-rewrite all need confirmation.
+- **Honest communication** — no performative agreement, no empty affirmations.
+
+## Self-improvement loop
+
+- After any user correction, append a rule to `tasks/lessons.md` **before** continuing other work.
+- At session start, read `tasks/lessons.md` and apply its rules for the duration of the session.
+
+## Task management
+
+1. Write the plan to `tasks/todo.md` with checkable items.
+2. Verify the plan with the user before implementing.
+3. Mark items complete as you go.
+4. Append a review section on completion.
+
+## Command shortcuts
+
+Verbal phrases that map directly to a destination — go there without asking.
+
+| Phrase | Target |
+|---|---|
+| "add to tasks" / "add to the list" | `tasks/To Do Notes.md` |
+| "add a lesson" | `tasks/lessons.md` (prepend entry) |
+| "orient" / "get me up to speed" | run the `orient` skill |
+| "wrap" / "close out" | run the `wrap` skill |
+
+Rule: when a new shortcut emerges, ask once then add it to this table — so the shortcut works next time.
+
+## Credentials
+
+**Iron Law: credentials never live in files.** Passwords, API keys, tokens, recovery codes all live in your password manager. This file references credentials only by their password-manager item name, never their value.
+
+If the user pastes a credential into chat (happens occasionally), refuse to save it, explain why, and recommend regeneration because the transcript has already leaked it.
