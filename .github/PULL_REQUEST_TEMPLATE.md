@@ -29,3 +29,9 @@
 ## Related
 
 <!-- Link the Issue or Discussion this comes from, if any. -->
+
+## Patterns board
+
+<!-- If this change promotes, relegates, or refines a pattern tracked in PATTERNS_BOARD.md, link the entry. -->
+- Patterns board entry: <!-- link or "n/a" -->
+

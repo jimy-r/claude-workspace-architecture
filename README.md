@@ -8,6 +8,26 @@ A blueprint for a personal [Claude Code](https://claude.com/claude-code) workspa
 - **[ADOPTION.md](ADOPTION.md)** — a 5-step walkthrough for setting up a similar workspace, minimum-viable at each step.
 - **[samples/](samples/)** — schematic scaffold files (CLAUDE.md and CONTEXT.md templates, a canonical role, a project binding, a custom skill, a hook config, a task list) you can fork and adapt.
 
+## Who this is for
+
+Four rough tiers — all welcome:
+
+| Tier | What they get from this |
+|---|---|
+| **Browsers** | A worked example of how the full Claude Code toolkit fits together end-to-end. Read `META_ARCHITECTURE.md` and move on. |
+| **Adopters** | A template to build their own workspace from. Follow `ADOPTION.md`, fork `samples/`, adapt. |
+| **Contributors** | A shared reference they can improve. See [CONTRIBUTING.md](CONTRIBUTING.md). |
+| **Maintainers** | Someone running their own derivative as a shared hub for their team or community. Fork and re-publish. |
+
+## What a contribution looks like
+
+- **Roles** — fixed schema (Identity / Directives / Constraints / Method / Output / Red Flags / Rationalization Table). See [`samples/roles/_template.md`](samples/roles/_template.md) for the skeleton and [`samples/roles/example-security-auditor.md`](samples/roles/example-security-auditor.md) filled in.
+- **Skills** — single-file `SKILL.md` with a [CSO-style description](https://docs.claude.com/en/docs/claude-code/skills) (the trigger condition) + a procedure. See [`samples/.claude/skills/orient/SKILL.md`](samples/.claude/skills/orient/SKILL.md).
+- **Hooks** — small JSON entries wiring a shell command to a tool event. See [`samples/.claude/settings.example.json`](samples/.claude/settings.example.json).
+- **Project CONTEXT.md** — entity facts a role binding consumes. See [`samples/CONTEXT.md.example`](samples/CONTEXT.md.example).
+
+If a pattern has worked in your own workspace, chances are it'll help someone else. Open an Issue or start a Discussion.
+
 ## What's in the doc
 
 How a single working directory can host:
@@ -54,3 +74,7 @@ Three surfaces, pick the right one:
 ## License
 
 [MIT](LICENSE). Reuse freely.
+
+---
+
+*Last verified against the repo structure on **2026-04-19**.*

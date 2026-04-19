@@ -420,3 +420,7 @@ Any agent that interacts with the open web — browser automation, web scraping,
 - **Python unit tests for admin scripts** — cover categorisation + workbook update + extract scripts for regression protection on financial data
 - **Path-scoped rules for the personal-finance folder** — bank-code conventions, FY conventions, xlsx write guards
 - **Extend PreToolUse hook to cover more health data** — pathology, medication, immunisations folders; tracking workbooks
+
+---
+
+*Last verified against the repo structure on **2026-04-19**. Flag drift via an Issue or correct in a PR.*

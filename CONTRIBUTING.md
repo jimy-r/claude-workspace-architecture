@@ -74,12 +74,53 @@ When in doubt, generalise. Reviewers will bounce PRs that contain identifiers �
 - **PR description should answer:** what changed, why, and did you run the redaction check?
 - Keep existing tone: terse, structural, opinionated.
 
+## Commit conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) — short, scannable, makes history greppable.
+
+Format: `<type>: <description>` (lowercase description, present tense).
+
+| Type | Use for |
+|---|---|
+| `feat:` | A new role / skill / hook / pattern / sample |
+| `fix:` | Correction to an existing pattern or doc |
+| `docs:` | Docs-only changes (README, CONTRIBUTING, etc.) |
+| `refactor:` | Structural change that doesn't alter meaning |
+| `chore:` | Tooling, dependencies, config |
+
+Examples:
+- `feat: add developmental-editor role with pressure-test notes`
+- `fix: correct Mermaid anchor in META_ARCHITECTURE §5`
+- `docs: clarify redaction rules in CONTRIBUTING`
+
+Include a `Co-Authored-By:` trailer for Claude-assisted commits.
+
 ## Branching
 
-- Main branch is `main`. Fork → branch → PR.
+- Main branch is `main`. Fork → branch → PR. **Never commit directly to `main`** — the convention matters even though branch protection isn't enforced.
 - Branch names: short, descriptive — `add-role-X`, `fix-mermaid-section-9`, `improve-heartbeat-loop`.
 - Delete merged branches; the repo has auto-delete enabled.
+
+## Scope boundaries
+
+Some files affect the whole repo's shape, contribution flow, or privacy posture. **Open a Discussion or Issue before PRing changes to these** — bulk changes without prior agreement will likely get bounced.
+
+| File | Why |
+|---|---|
+| `META_ARCHITECTURE.md` §1–§13 | Core structural narrative. Section order, framing, and the opinionated shape are load-bearing. (§14 "Planned future upgrades" is a living list; edit freely.) |
+| `samples/roles/_template.md` | Schema contract for every contributed role. A change ripples through every existing role and every future one. |
+| `samples/CONTEXT.md.example` | Schema contract for project `CONTEXT.md` files — same rationale. |
+| `CONTRIBUTING.md` (this file) | The contribution contract itself. Changes affect everyone's future PRs. |
+| `PATTERNS_BOARD.md` — threshold definitions | Governance rules for promotion / relegation. Tune with consensus, not unilaterally. |
+| `.github/ISSUE_TEMPLATE/*` and `PULL_REQUEST_TEMPLATE.md` | Contributor UX — changes affect every new Issue/PR. |
+| `ADOPTION.md` Steps 1–5 | The "minimum viable" walkthrough. Breaking changes confuse first-time readers; new steps / appendices are welcome. |
+
+Everything else — new samples, new roles, new skills, table-row improvements, typo fixes — is fair game for direct PRs.
 
 ## Conduct
 
 Be honest, be terse, credit sources, critique ideas not people. No performative politeness, no passive-aggression. Disagreement is expected and welcome; keep it focused on the work.
+
+---
+
+*Last verified against the repo structure on **2026-04-19**. Flag drift via an Issue or correct in a PR.*

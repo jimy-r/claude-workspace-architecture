@@ -5,7 +5,3 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
-
-# Local operating manual for editing this repo — stays out of the public tree.
-# Contains the private-vs-public source-of-truth pointers and redaction checklist.
-CLAUDE.md
