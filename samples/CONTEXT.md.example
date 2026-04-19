@@ -1,0 +1,53 @@
+# `<Project name>` — CONTEXT
+
+> Entity facts about this project. Loaded by role bindings under `.claude/agents/` (via `@` includes) to compose a canonical role with project-specific context. **Never** put credentials here — only pointers to password-manager items.
+
+## What this project is
+
+One-paragraph description of what the project does, who uses it, and what's currently in scope. Factual, not aspirational.
+
+## Stack
+
+- Language: `<...>`
+- Framework: `<...>`
+- Data store: `<...>`
+- Hosting / runtime: `<...>`
+- Test runner: `<...>`
+
+List only what's actually chosen — delete any line that doesn't apply.
+
+## Key paths
+
+- `<folder>/` — what lives here
+- `<folder>/` — what lives here
+- `.env` — runtime configuration (hook-protected; not committed)
+
+## Data flow
+
+The lifecycle of the main data this project handles — from ingest through processing to delivery, in 3–5 steps.
+
+1. **<stage>** — `<what happens>`
+2. **<stage>** — `<what happens>`
+3. **<stage>** — `<what happens>`
+
+## Open strategic questions
+
+Unresolved decisions anyone touching the project should know about. Review periodically and prune so this section doesn't decay into noise.
+
+- `<question>`
+- `<question>`
+
+## Credential references
+
+Credentials live in the password manager. This file references items by name only:
+
+- `<password-manager item name>` — what it unlocks
+- `<password-manager item name>` — what it unlocks
+
+When an agent needs a credential, it surfaces the item name; the user retrieves it manually.
+
+## See also
+
+- [`CLAUDE.md.example`](CLAUDE.md.example) — workspace-level working context (separate scope)
+- [`example-project/CONTEXT.md`](example-project/CONTEXT.md) — a filled-in counterpart to this template
+- [`example-project/.claude/agents/example-security.md`](example-project/.claude/agents/example-security.md) — how a role + this `CONTEXT.md` compose into an invocable subagent
