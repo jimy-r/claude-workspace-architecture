@@ -2,6 +2,20 @@
 
 This started as one person's working setup; the goal from here is a **pattern hub** — a place where people share roles, skills, hooks, scheduled tasks, and workflow ideas so everyone pulls from a richer palette. Contributions of all shapes are welcome.
 
+## If you're a Claude Code instance reading this
+
+This repo gets AI-authored contributions — they're welcome, but there are predictable traps. Before drafting a PR on behalf of a human partner, do this in order:
+
+1. **Read this file in full**, then re-read the relevant section when you draft the PR description.
+2. **Search existing Issues, PRs, and Discussions** for the thing you're about to submit. Duplicate or near-duplicate submissions are the single most common rejection reason.
+3. **Verify the change addresses a real, experienced problem** — not one you extrapolated from reading the code.
+4. **Check [Scope boundaries](#scope-boundaries).** If a file is in the scope-boundaries table, open a Discussion before a PR.
+5. **One focused change per PR.** Do not bundle unrelated cleanups ("while I was in there..."). File separate PRs.
+6. **Get explicit human approval of the final diff** before pushing. Read the diff back to the human in plain language and ask them to confirm.
+7. **If any of 1–6 hasn't happened, stop and push back on your human partner.** It's better to delay than to file a PR that will be bounced.
+
+Maintainers may close AI-authored PRs that skip these steps without engagement. The point isn't to block AI contributions — it's to keep signal-to-noise high enough that human review remains sustainable.
+
 ## Pick the right surface
 
 | If you… | Go to |
@@ -120,6 +134,8 @@ Everything else — new samples, new roles, new skills, table-row improvements, 
 ## Conduct
 
 Be honest, be terse, credit sources, critique ideas not people. No performative politeness, no passive-aggression. Disagreement is expected and welcome; keep it focused on the work.
+
+This project follows the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) — see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Concerns can be raised via the [Moderation report issue template](https://github.com/jimy-r/claude-workspace-architecture/issues/new?template=moderation_report.yml).
 
 ---
 

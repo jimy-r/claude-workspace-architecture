@@ -70,6 +70,7 @@ Three surfaces, pick the right one:
 
 - [Claude Code documentation](https://docs.claude.com/en/docs/claude-code/overview)
 - Individual feature pages linked inline throughout `META_ARCHITECTURE.md`
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — project norms, reporting path
 
 ## License
 

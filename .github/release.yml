@@ -1,0 +1,35 @@
+# Configures GitHub's auto-generated release notes.
+# Docs: https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+changelog:
+  exclude:
+    labels:
+      - skip-changelog
+      - stale
+  categories:
+    - title: Patterns promoted
+      labels:
+        - promoted
+    - title: Patterns refined
+      labels:
+        - refined
+    - title: Patterns relegated
+      labels:
+        - relegated
+    - title: New components
+      labels:
+        - component-proposal
+    - title: Workflow improvements
+      labels:
+        - improvement
+    - title: Documentation
+      labels:
+        - docs
+    - title: Contribution flow
+      labels:
+        - contribution-flow
+    - title: CI / tooling
+      labels:
+        - ci
+    - title: Other changes
+      labels:
+        - "*"

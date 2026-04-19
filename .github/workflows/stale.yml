@@ -1,0 +1,40 @@
+name: Stale Issues and PRs
+
+on:
+  schedule:
+    - cron: '17 6 * * *'  # daily at 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          days-before-issue-stale: 60
+          days-before-issue-close: 14
+          stale-issue-label: 'stale'
+          stale-issue-message: >
+            This issue has been inactive for 60 days. It will close in 14 days
+            unless there is further activity. If it is still relevant, comment
+            below or remove the `stale` label. Add the `pinned` label to
+            exempt it permanently.
+          close-issue-message: >
+            Closing due to inactivity. Reopen anytime if this becomes
+            relevant again.
+          days-before-pr-stale: 30
+          days-before-pr-close: 14
+          stale-pr-label: 'stale'
+          stale-pr-message: >
+            This PR has been inactive for 30 days. It will close in 14 days
+            unless there is further activity.
+          close-pr-message: >
+            Closing due to inactivity. Reopen anytime when ready to pick it
+            back up.
+          exempt-issue-labels: 'pinned,patterns-board,moderation,blocked'
+          exempt-pr-labels: 'pinned,blocked,work-in-progress'
+          operations-per-run: 100

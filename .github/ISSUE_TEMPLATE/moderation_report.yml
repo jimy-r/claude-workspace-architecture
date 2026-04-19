@@ -1,0 +1,45 @@
+name: Moderation report
+description: Flag a community-health concern — spam, off-topic automated submissions, attribution issues, or privacy leaks in a contribution.
+title: "[Moderation] "
+labels: ["moderation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for flagging this. Reports made in good faith will be treated confidentially where reasonably possible. Retaliation against reporters is itself a violation of this project's norms.
+
+        For urgent matters, you can also contact a maintainer directly via their GitHub profile.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: Pick the closest match. If nothing fits, choose "Other" and describe in the details.
+      options:
+        - Code of Conduct concern
+        - Spam or low-effort automated submissions
+        - Off-topic or out-of-scope contribution patterns
+        - Attribution or licensing concern
+        - Privacy leak (content that should not be in a public repo)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Where did this occur?
+      description: Link to the Issue / PR / Discussion / commit.
+      placeholder: https://github.com/jimy-r/claude-workspace-architecture/...
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A brief factual description — what, when, who (GitHub handle). No speculation about intent.
+    validations:
+      required: true
+  - type: textarea
+    id: desired-outcome
+    attributes:
+      label: Desired outcome (optional)
+      description: What would a good resolution look like? E.g. warning, revert, removal from collaborator list.

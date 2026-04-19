@@ -1,0 +1,33 @@
+name: Validate samples
+
+on:
+  pull_request:
+    paths:
+      - 'samples/**'
+      - 'scripts/validate_samples.py'
+      - '.github/workflows/validate-samples.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'samples/**'
+      - 'scripts/validate_samples.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run sample validator
+        run: python scripts/validate_samples.py
