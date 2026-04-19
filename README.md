@@ -6,7 +6,7 @@ A blueprint for a personal [Claude Code](https://claude.com/claude-code) workspa
 
 - **[META_ARCHITECTURE.md](META_ARCHITECTURE.md)** — the full structural reference (~400 lines, with diagrams).
 - **[ADOPTION.md](ADOPTION.md)** — a 5-step walkthrough for setting up a similar workspace, minimum-viable at each step.
-- **[samples/](samples/)** — schematic scaffold files (a role, a project binding, a skill, a hook config, a task list) you can fork and adapt.
+- **[samples/](samples/)** — schematic scaffold files (CLAUDE.md and CONTEXT.md templates, a canonical role, a project binding, a custom skill, a hook config, a task list) you can fork and adapt.
 
 ## What's in the doc
 
