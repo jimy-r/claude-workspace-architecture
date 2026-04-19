@@ -1,0 +1,25 @@
+name: Gap or correction
+description: Typo, broken link, unclear section, outdated reference, or rendering issue.
+title: "[Docs] "
+labels: ["docs"]
+body:
+  - type: input
+    id: location
+    attributes:
+      label: Where?
+      description: File path + section or line if you have it.
+      placeholder: "e.g. META_ARCHITECTURE.md §5 Skills, or ADOPTION.md Step 3"
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's wrong?
+      description: What did you expect vs. what's there.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested fix (optional)
+      description: A draft replacement, a link to the right source, a sketch of what should be there instead.

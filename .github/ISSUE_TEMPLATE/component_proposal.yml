@@ -1,0 +1,57 @@
+name: Component proposal
+description: Propose a new role, skill, hook, scheduled task, or MCP pattern to add to the repo.
+title: "[Component] "
+labels: ["component-proposal"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for proposing a new component. Use this form for **concrete** proposals you're ready to see discussed on a PR. If the idea is still shaping, start in [Discussions → Ideas](https://github.com/jimy-r/claude-workspace-architecture/discussions) first.
+  - type: dropdown
+    id: component-type
+    attributes:
+      label: Component type
+      description: What kind of thing are you proposing?
+      options:
+        - Canonical role (roles/)
+        - Custom skill (.claude/skills/)
+        - Hook (PreToolUse / PostToolUse / SessionStart / Notification / PreCompact)
+        - Scheduled task / routine
+        - MCP server wiring pattern
+        - Task-coordination pattern
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does it solve?
+      description: Two or three sentences. What's the pain today, and who feels it?
+      placeholder: |
+        e.g. "Reviewing PRs currently requires manually checking a mental list of things.
+        A code-quality-reviewer role would standardise that."
+    validations:
+      required: true
+  - type: textarea
+    id: shape
+    attributes:
+      label: Proposed shape
+      description: Sketch the component — key inputs, outputs, trigger conditions, any schema specifics. Reference an existing template if relevant.
+      placeholder: |
+        For a role, fill in Identity / Directives / Constraints / Method / Rationalization Table.
+        For a skill, the CSO description (when to invoke) + the procedure.
+        For a hook, the trigger + the command + why it's safe.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What else did you look at, and why did this shape win? (Optional but helpful.)
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: No personal identifiers, credentials, business specifics, or other private content in this proposal.
+          required: true

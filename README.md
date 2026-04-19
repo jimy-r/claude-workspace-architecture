@@ -28,9 +28,21 @@ Tables in the doc use `[stock]` / `[plugin]` / `[local]` / `[custom]` markers so
 
 Nothing in here is proprietary or novel — it's just one working arrangement of the pieces Claude Code already provides. Published because a few people have asked how the whole thing fits together, and a single document is easier to hand over than a verbal tour.
 
+The hope is that it becomes a **pattern hub** — a place where people bring their own roles, skills, hooks, scheduled tasks, and workflow ideas so everyone pulls from a richer palette than any one person can assemble solo.
+
+## Contributing
+
+Three surfaces, pick the right one:
+
+- **[Discussions](https://github.com/jimy-r/claude-workspace-architecture/discussions)** — sketch an idea that's still forming, ask a usage question, or share what you've built in your own workspace.
+- **[Issues](https://github.com/jimy-r/claude-workspace-architecture/issues/new/choose)** — propose a concrete component (role, skill, hook, routine, MCP pattern), flag a gap or typo, or suggest a workflow improvement. Templates guide the shape.
+- **Pull requests** — fork, branch, PR. See [CONTRIBUTING.md](CONTRIBUTING.md) for standards.
+
+**One hard rule:** no personal identifiers, no credentials, no business / health / financial specifics. Every commit must be safe for a public audience. Full guidance in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Caveats
 
-- This is a **snapshot**, not a maintained product. The source workspace evolves; this copy may drift.
+- This started as one person's working setup; it's evolving into a shared reference with community contributions. The original author curates the core; contributors extend the library.
 - Paths in the doc are generic (`<workspace>`, `<home>`) — any concrete setup will substitute its own.
 - Nothing here executes on its own; the doc describes structure, not runnable tooling.
 

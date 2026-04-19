@@ -1,0 +1,40 @@
+name: Workflow improvement
+description: Suggest an upgrade to an existing pattern — a cleaner way to do something the doc already describes.
+title: "[Improvement] "
+labels: ["improvement"]
+body:
+  - type: input
+    id: area
+    attributes:
+      label: Which pattern?
+      description: The section/component the improvement targets.
+      placeholder: "e.g. heartbeat agent, role-pressure-test skill, hook auto-format"
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current approach
+      description: What the doc describes today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed improvement
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is this better?
+      description: Evidence, experience, or reasoning. Trade-offs if any.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: No personal identifiers, credentials, business specifics, or other private content in this proposal.
+          required: true

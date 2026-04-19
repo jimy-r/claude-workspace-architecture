@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions — Ideas, questions, show and tell
+    url: https://github.com/jimy-r/claude-workspace-architecture/discussions
+    about: >-
+      Use Discussions for anything that isn't a concrete proposal or a specific
+      gap — sketch ideas before they're ready, ask usage questions, share what
+      you've built in your own workspace.
