@@ -1,4 +1,20 @@
-<!-- Thanks for contributing! Please fill in the sections below. -->
+<!--
+Thanks for contributing.
+
+PR title format — Conventional Commits, lowercase description, present tense:
+
+  ✅  feat: add developmental-editor role with pressure-test notes
+  ✅  fix: correct Mermaid anchor in META_ARCHITECTURE §5
+  ✅  docs: clarify redaction rules in CONTRIBUTING
+  ✅  chore: pin actions/checkout to v4.1.7
+
+  ❌  Update CONTRIBUTING
+  ❌  [WIP] new role
+  ❌  fixed a bug
+
+Types: feat | fix | docs | refactor | chore
+See CONTRIBUTING.md § Commit conventions for the full list.
+-->
 
 ## What changed
 
@@ -6,11 +22,19 @@
 
 ## Why
 
-<!-- The problem or opportunity this addresses. Link an Issue or Discussion if relevant. -->
+<!--
+Make it specific.
+
+  ✅  Solves a problem I hit while adapting the orient skill to my own workspace.
+  ✅  Corrects a broken link flagged by the weekly link-check cron.
+  ✅  Promoted from PATTERNS_BOARD entry — signal across 4 Discussions.
+
+  ❌  "Because it's better"            (vague)
+  ❌  "Adds a useful role"              (useful to whom? what problem?)
+  ❌  "Cleanup"                         (scope unclear, will be bounced)
+-->
 
 ## Type
-
-<!-- Check one. -->
 
 - [ ] Bug fix / typo / broken link / clarity improvement
 - [ ] New component (role / skill / hook / scheduled task / MCP pattern)
@@ -26,6 +50,10 @@
 - [ ] No health, financial, or legal data
 - [ ] Generic placeholders used where appropriate (`<workspace>`, `<home>`, "the user", etc.)
 
+## Scope boundaries
+
+- [ ] I have **not** touched any file listed in [CONTRIBUTING.md § Scope boundaries](../blob/main/CONTRIBUTING.md#scope-boundaries), **or** I have linked the Discussion / Issue that pre-agreed the change below.
+
 ## Related
 
 <!-- Link the Issue or Discussion this comes from, if any. -->
@@ -35,3 +63,13 @@
 <!-- If this change promotes, relegates, or refines a pattern tracked in PATTERNS_BOARD.md, link the entry. -->
 - Patterns board entry: <!-- link or "n/a" -->
 
+---
+
+<!--
+Before pushing:
+  1. Run the redaction grep on changed files.
+  2. git diff — eyeball every changed line.
+  3. One focused change per PR; split unrelated fixes into separate PRs.
+  4. Get explicit human approval if this was drafted by an AI agent.
+  5. Verify Mermaid / heavy markdown renders correctly on GitHub.
+-->

@@ -1,0 +1,22 @@
+name: Lock closed Issues and PRs
+
+on:
+  schedule:
+    - cron: '19 4 1 * *'  # Monthly, 1st of month, 04:19 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: dessant/lock-threads@v5
+        with:
+          issue-inactive-days: '90'
+          pr-inactive-days: '90'
+          exclude-any-issue-labels: 'pinned,patterns-board'
+          exclude-any-pr-labels: 'pinned'
+          process-only: 'issues, prs'

@@ -1,0 +1,7 @@
+node_modules/
+.git/
+
+# Keep our curated formatting for samples — Prettier can be aggressive on
+# YAML frontmatter and code fences inside Markdown. If we find value in
+# letting Prettier touch these later, remove the ignore.
+samples/**/*.md.example

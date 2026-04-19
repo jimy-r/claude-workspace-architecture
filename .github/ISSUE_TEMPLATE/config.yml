@@ -6,3 +6,25 @@ contact_links:
       Use Discussions for anything that isn't a concrete proposal or a specific
       gap — sketch ideas before they're ready, ask usage questions, share what
       you've built in your own workspace.
+  - name: Adapting this to your own workspace
+    url: https://github.com/jimy-r/claude-workspace-architecture/discussions
+    about: >-
+      Hitting friction while following ADOPTION.md or forking samples/?
+      Open a Q&A discussion — other adopters will see it and learn from the
+      answer.
+  - name: Claude Code bug, feature request, or CLI question
+    url: https://github.com/anthropics/claude-code/issues
+    about: >-
+      Issues with Claude Code itself (the CLI, app, hooks, subagents, skills)
+      belong in the Anthropic repo, not here. This repo only documents
+      patterns built on top of Claude Code.
+  - name: Claude Code documentation
+    url: https://docs.claude.com/en/docs/claude-code/overview
+    about: >-
+      For how-to questions about Claude Code features, start with the
+      official documentation.
+  - name: Anthropic API / SDK question
+    url: https://docs.claude.com/en/api/overview
+    about: >-
+      Questions about the underlying Claude API or SDK (not Claude Code
+      specifically) belong in the Anthropic support channels.

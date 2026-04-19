@@ -1,0 +1,59 @@
+# Path-based auto-labelling for pull requests.
+# Used by .github/workflows/labeler.yml (actions/labeler).
+# Syntax: https://github.com/actions/labeler
+
+area/samples:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'samples/**'
+
+area/roles:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'samples/roles/**'
+
+area/skills:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'samples/.claude/skills/**'
+
+area/docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'README.md'
+          - 'ADOPTION.md'
+          - 'META_ARCHITECTURE.md'
+          - 'CLAUDE.md'
+          - 'SUPPORT.md'
+
+area/governance:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'CONTRIBUTING.md'
+          - 'CODE_OF_CONDUCT.md'
+          - 'PATTERNS_BOARD.md'
+          - 'STYLE_GUIDE.md'
+          - '.github/CODEOWNERS'
+
+area/tooling:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'scripts/**'
+          - '.markdownlint*'
+          - '.prettierrc*'
+          - '.prettierignore'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/**'
+          - '.github/dependabot.yml'
+          - '.github/release.yml'
+          - '.github/labeler.yml'
+
+contribution-flow:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/ISSUE_TEMPLATE/**'
+          - '.github/PULL_REQUEST_TEMPLATE.md'
+          - 'CONTRIBUTING.md'

@@ -70,6 +70,8 @@ Three surfaces, pick the right one:
 
 - [Claude Code documentation](https://docs.claude.com/en/docs/claude-code/overview)
 - Individual feature pages linked inline throughout `META_ARCHITECTURE.md`
+- [SUPPORT.md](SUPPORT.md) — where to go for what (adaptation, bugs, Q&A)
+- [STYLE_GUIDE.md](STYLE_GUIDE.md) — writing and formatting conventions
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — project norms, reporting path
 
 ## License
