@@ -47,9 +47,9 @@ Some files need Discussion/Issue agreement before a PR — see the Scope boundar
 2. `git diff` — eyeball every changed line.
 3. Conventional commit message.
 4. Push your branch; open a PR using the template.
-5. Enable auto-merge on the PR:
-   `gh pr merge --auto --squash --delete-branch`.
-   The maintainer's repo setting `allow_auto_merge: true` combined with no branch protection on `main` means the PR merges within seconds of opening, without requiring a human click. For contributor PRs that need review, the maintainer can add `--auto` manually after approving.
+5. Merge immediately on open:
+   `gh pr merge --squash --delete-branch`.
+   The repo has no branch protection on `main` and no required status checks, so `--auto` is rejected by GitHub (it only applies when a PR is blocked on something). Plain merge is instant. Contributor PRs follow the same command once the maintainer has reviewed and approved them.
 6. Open the merged commit on GitHub and verify Mermaid / markdown rendered correctly. Any leak or render bug after merge means a follow-up commit — amending never fully erases a public mistake.
 
 ## Tone
