@@ -453,4 +453,4 @@ Any agent that interacts with the open web — browser automation, web scraping,
 
 ---
 
-*Last verified against the repo structure on **2026-04-19**. Flag drift via an Issue or correct in a PR.*
+*Last verified against the repo structure on **2026-04-20**. Flag drift via an Issue or correct in a PR.*

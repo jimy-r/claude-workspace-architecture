@@ -7,10 +7,15 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The
 ## [Unreleased]
 
 ### Added
+- `META_ARCHITECTURE.md` §8 **memory architecture hardening** — `episodes/` subfolder for one-off events (not always-loaded), `learned_on` / `last_verified` / `verify_by_checking` YAML frontmatter on `reference_*` memory files, a memory-lint script that walks memory + episodes and verifies referenced paths (runtime-created paths allowlisted), and a weekly `consolidate-memory` scheduled task that resolves contradictions, converts relative→absolute dates, merges duplicates, moves decayed episodes, and keeps `MEMORY.md` under its 200-line ceiling. Four-op discipline per fact (ADD / UPDATE / DELETE / NOOP). (2026-04-20)
+- `META_ARCHITECTURE.md` §3 **OS-level scheduler workaround** — when Claude Code's built-in `scheduled-tasks` MCP is unconnected, SKILL.md files don't fire on their own. Documents a thin wrapper (`scripts/run-scheduled-skill.ps1`) that reads a SKILL.md and pipes it to `claude --print` as the prompt, invoked by OS-level Task Scheduler / cron / launchd entries. Includes the PS 5.1 native-CLI lesson as a reusable pattern. (2026-04-20)
 - `SECURITY.md` — three-category security policy (privacy leaks / workflow vulns / docs weakening reader security) with public-vs-private reporting routes.
 - `CHANGELOG.md` (this file).
 - `ATTRIBUTION.md` — credit for patterns borrowed from other public repos.
 - Diátaxis framing paragraph in `README.md` mapping the repo's docs across tutorial / how-to / reference / explanation quadrants.
+
+### Changed
+- GitHub Actions version bumps via Dependabot: `actions/checkout` 4→6, `actions/setup-python` 5→6, `actions/stale` 9→10, `peter-evans/create-issue-from-file` 5→6, `dessant/lock-threads` 5→6. All pure Node 16→20 runtime upgrades; input APIs unchanged for our usage. (2026-04-20, PRs #1-5)
 
 ---
 
