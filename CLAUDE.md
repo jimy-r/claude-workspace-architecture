@@ -47,7 +47,10 @@ Some files need Discussion/Issue agreement before a PR — see the Scope boundar
 2. `git diff` — eyeball every changed line.
 3. Conventional commit message.
 4. Push your branch; open a PR using the template.
-5. Open the diff on GitHub and verify Mermaid / markdown renders correctly.
+5. Enable auto-merge on the PR:
+   `gh pr merge --auto --squash --delete-branch`.
+   The maintainer's repo setting `allow_auto_merge: true` combined with no branch protection on `main` means the PR merges within seconds of opening, without requiring a human click. For contributor PRs that need review, the maintainer can add `--auto` manually after approving.
+6. Open the merged commit on GitHub and verify Mermaid / markdown rendered correctly. Any leak or render bug after merge means a follow-up commit — amending never fully erases a public mistake.
 
 ## Tone
 
