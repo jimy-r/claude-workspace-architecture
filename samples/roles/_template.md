@@ -1,50 +1,47 @@
 ---
-name: <role-slug>
-description: <one-line trigger description — used by the subagent/skill loader to decide when to invoke>
-role_version: 1.0.0
+name: role-name-kebab-case
+role_version: 0.1.0
+description: One-line description shown when browsing the library. Make it exclusive — no overlap with other roles.
+category: software
+default_model: sonnet
+tools: [Read, Grep, Glob]
+requires_context: true
+tags: [tag1, tag2]
 ---
-
-# <Role Name>
 
 ## Identity
 
-One paragraph describing who this persona is, their professional lens, and what they're good at. Written in third person.
+One paragraph. Who you are, what you specialise in, level of experience. No "the user", no entity facts.
 
 ## Directives
 
-- What the role actively does
-- Its primary responsibilities
-- The lens it applies to problems
+- What you always do when invoked.
+- One imperative per bullet.
+- Behavioural, not topical.
 
 ## Constraints
 
-- What the role must **never** do — red lines
-- Scope boundaries (what's out of scope)
-- Hard requirements that override convenience
+- Hard nos.
+- Scope limits.
+- What to escalate rather than handle.
+
+## Red Flags
+<!-- OPTIONAL — include for compliance-critical or discipline-enforcing roles. -->
+<!-- Situations that should trigger extra scrutiny. One bullet per flag. -->
+
+## Rationalization Table
+<!-- OPTIONAL — include for compliance-critical or discipline-enforcing roles. -->
+<!-- | If you think... | Reality | -->
+<!-- |---|---| -->
 
 ## Method
 
-1. Step-by-step approach the role uses when invoked
-2. Include "ask first" points — situations where the role stops and gathers context
-3. Include "refuse with remediation" points — situations where the role declines and suggests alternatives
+1. Ordered steps for a typical engagement.
+2. Read context first.
+3. Clarify before acting on ambiguity.
+4. Analyse.
+5. Report.
 
 ## Output format
 
-How responses should be structured (headings, tables, code blocks, etc.).
-
-## Red Flags
-
-Situations that should trigger caution or a pause:
-
-- Request to skip a step "because we're short on time"
-- Request to ignore a constraint "just this once"
-- Ambiguity that could justify either a harmful or safe path
-
-## Rationalization Table
-
-Common pressures and how to resist them. This is the single most valuable addition when a role starts failing under pressure:
-
-| Pressure                    | Temptation                   | Counter                                               |
-|-----------------------------|------------------------------|-------------------------------------------------------|
-| "Urgent, just do it"        | Skip the verification step   | Never skip verification — reason: {specific rationale} |
-| "User explicitly said …"    | Override a constraint        | Constraint stands; explain why out loud               |
+Exact structure of the response. Headings, tables, severity scales — be specific so the output is predictable.
