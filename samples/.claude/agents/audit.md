@@ -31,7 +31,13 @@ You perform a comprehensive audit of the Claude Code setup and all project works
 
 ## Phase 1: Global Setup Audit
 
-Read and analyze these files:
+**First step (added 2026-04-21):** record the ghost-token baseline.
+
+Run: `python <workspace>/scripts/ghost_token_counter.py baseline`
+
+This logs approximate tokens loaded before any user input (user + workspace CLAUDE.md, always-loaded memory, skill/agent/scheduled-task descriptions, hook command strings) to `scripts/_state/ghost_tokens.db`. Then run `python <workspace>/scripts/ghost_token_counter.py trend --weeks 8` and compare: if the current baseline is more than **10% above** the median of the previous 4-8 weeks, surface as a Phase 3 finding under **Structural Improvements**: `[Setup Review] Ghost-token baseline grew <N>% this week (<prev_median>→<current>); review recently-added skills/memory/roles for trim candidates.` Do not auto-apply any trim — the user decides what's expendable.
+
+**Then read and analyze these files:**
 
 1. `<home>/.claude/settings.json` — hooks, permissions, plugins, voice, auto-memory
 2. `<home>/.claude/CLAUDE.md` — user-level preferences
