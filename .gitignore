@@ -3,5 +3,8 @@ Thumbs.db
 *.bak
 *.tmp
 *.swp
+*.pyc
 .vscode/
 .idea/
+.ruff_cache/
+__pycache__/

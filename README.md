@@ -24,9 +24,12 @@ Four rough tiers — all welcome:
 
 ## What a contribution looks like
 
-- **Roles** — fixed schema (Identity / Directives / Constraints / Method / Output / Red Flags / Rationalization Table). See [`samples/roles/_template.md`](samples/roles/_template.md) for the skeleton and [`samples/roles/example-security-auditor.md`](samples/roles/example-security-auditor.md) filled in.
-- **Skills** — single-file `SKILL.md` with a [CSO-style description](https://docs.claude.com/en/docs/claude-code/skills) (the trigger condition) + a procedure. See [`samples/.claude/skills/orient/SKILL.md`](samples/.claude/skills/orient/SKILL.md).
+- **Roles** — fixed schema (Identity / Directives / Constraints / Method / Output / Red Flags / Rationalization Table). See [`samples/roles/_template.md`](samples/roles/_template.md) for the skeleton and [`samples/roles/security-auditor.md`](samples/roles/security-auditor.md) for a filled example. 16 more canonical roles live alongside it (accountant, researcher, tester, etc. — see [`samples/README.md`](samples/README.md)).
+- **Skills** — single-file `SKILL.md` with a [CSO-style description](https://docs.claude.com/en/docs/claude-code/skills) (the trigger condition) + a procedure. See [`samples/.claude/skills/orient/SKILL.md`](samples/.claude/skills/orient/SKILL.md) and the 6 other workspace skills in the same folder.
+- **Agents** — custom subagent definitions, auto-routed via CSO-style descriptions. See [`samples/.claude/agents/`](samples/.claude/agents/) for three working examples (weekly upgrade auditor, 2-hourly project-manager heartbeat, evidence-based researcher).
+- **Scheduled tasks** — SKILL.md files fired by OS-level scheduler via the `run-scheduled-skill.ps1` wrapper. See [`samples/.claude/scheduled-tasks/morning-brief/SKILL.md`](samples/.claude/scheduled-tasks/morning-brief/SKILL.md) for a full daily-orchestrator pattern (email triage → receipts → bills → appointments → news → deliver).
 - **Hooks** — small JSON entries wiring a shell command to a tool event. See [`samples/.claude/settings.example.json`](samples/.claude/settings.example.json).
+- **Python / PowerShell helpers** — standalone utilities consumed by scheduled tasks. See [`samples/scripts/`](samples/scripts/) for ten working examples (RSS dedup, email rules engine, receipt pipeline, bill tracker, restic backup, etc.).
 - **Project CONTEXT.md** — entity facts a role binding consumes. See [`samples/CONTEXT.md.example`](samples/CONTEXT.md.example).
 
 If a pattern has worked in your own workspace, chances are it'll help someone else. Open an Issue or start a Discussion.
@@ -35,7 +38,7 @@ If a pattern has worked in your own workspace, chances are it'll help someone el
 
 How a single working directory can host:
 
-- **Roles library** — 16 canonical expert personas that compose with project-specific `CONTEXT.md` files via thin subagent bindings
+- **Roles library** — 17 canonical expert personas that compose with project-specific `CONTEXT.md` files via thin subagent bindings
 - **Launcher scripts + scheduled routines** — the `.bat` layer that bootstraps sessions, plus the Claude Code app's Routines feature that is progressively replacing them
 - **Hooks** — `PreToolUse` file-protection blocklist, `PostToolUse` auto-formatters, `SessionStart` context re-injection
 - **Custom workspace skills** — `orient`, `wrap`, `tasks`, `verify-completion`, `systematic-debugging`, `role-pressure-test`
@@ -86,4 +89,4 @@ Three surfaces, pick the right one:
 
 ---
 
-*Last verified against the repo structure on **2026-04-19**.*
+*Last verified against the repo structure on **2026-04-21**.*
