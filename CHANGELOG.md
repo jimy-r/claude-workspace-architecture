@@ -20,6 +20,7 @@ Format inspired by [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). The
 - Diátaxis framing paragraph in `README.md` mapping the repo's docs across tutorial / how-to / reference / explanation quadrants.
 
 ### Changed
+- **`link-check` workflow split into two modes** — on pull requests, lychee now checks only the `.md` files actually changed in the diff (via `git diff --name-only --diff-filter=ACMR`); on the weekly cron and manual dispatch it still runs against the full repo and auto-opens an Issue on failure. Rationale: whole-repo checks on every PR made contributors responsible for link rot they hadn't introduced, and flooded the maintainer's inbox with failure emails on unrelated PRs. Diff-only scopes PR failure to the author's actual change; the weekly cron catches background rot (stale vendor URLs, dangling internal links after deletions) on a reviewable rhythm. Pattern is standard in larger OSS repos (kubernetes, rust, etc.). No third-party action added for the diff — plain `git diff` in a bash step. (2026-04-21)
 - GitHub Actions version bumps via Dependabot: `actions/checkout` 4→6, `actions/setup-python` 5→6, `actions/stale` 9→10, `peter-evans/create-issue-from-file` 5→6, `dessant/lock-threads` 5→6. All pure Node 16→20 runtime upgrades; input APIs unchanged for our usage. (2026-04-20, PRs #1-5)
 
 ---

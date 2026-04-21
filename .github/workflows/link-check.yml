@@ -1,11 +1,19 @@
 name: Link check
 
+# Two modes:
+#   - On pull_request: check only the .md files the PR actually changed.
+#     Rationale: whole-repo checks on every PR punish contributors for link rot
+#     they didn't introduce. Diff-only scopes failure to the author's diff.
+#   - On schedule / workflow_dispatch: full-repo sweep. Catches background link
+#     rot (stale vendor URLs, deleted files linked from elsewhere). Auto-opens
+#     an Issue on failure so the maintainer triages on a weekly rhythm.
+
 on:
   pull_request:
     paths:
       - '**/*.md'
   schedule:
-    - cron: '0 6 * * 1'  # Monday 06:00 UTC
+    - cron: '0 6 * * 1' # Monday 06:00 UTC
   workflow_dispatch:
 
 permissions:
@@ -17,9 +25,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Full history so we can diff the PR head against base.
+          fetch-depth: 0
 
-      - name: Run lychee
-        id: lychee
+      - name: Get changed markdown files (PR only)
+        id: changed
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          files=$(git diff --name-only --diff-filter=ACMR \
+            "origin/${{ github.base_ref }}" HEAD -- '*.md' | tr '\n' ' ')
+          if [ -z "$files" ]; then
+            echo "No .md files added/modified in this PR — lychee will be skipped."
+            echo "any_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Changed .md files: $files"
+            echo "any_changed=true" >> "$GITHUB_OUTPUT"
+            echo "files=$files" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run lychee (PR — diff only)
+        id: lychee_pr
+        if: github.event_name == 'pull_request' && steps.changed.outputs.any_changed == 'true'
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --verbose
+            --no-progress
+            --max-concurrency 4
+            ${{ steps.changed.outputs.files }}
+          fail: true
+
+      - name: Run lychee (scheduled / manual — full repo)
+        id: lychee_full
+        if: github.event_name != 'pull_request'
         uses: lycheeverse/lychee-action@v2
         with:
           args: >-
@@ -27,7 +67,7 @@ jobs:
             --no-progress
             --max-concurrency 4
             './**/*.md'
-          fail: ${{ github.event_name == 'pull_request' }}
+          fail: false
 
       - name: Open issue on scheduled failure
         if: github.event_name == 'schedule' && env.lychee_exit_code != '0'
