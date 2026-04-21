@@ -156,6 +156,12 @@ The subagent should check these **specific sources** (fetch each, do not just se
 15. **Reddit r/ClaudeAI** — `https://www.reddit.com/r/ClaudeAI/.rss` — community patterns, skills, and tools surfacing around Claude / Claude Code. RSS.
 16. **Reddit r/ChatGPTCoding** — `https://www.reddit.com/r/ChatGPTCoding/.rss` — broader agentic-coding discussion (not Claude-specific). Useful for cross-ecosystem pattern spotting and identifying capabilities we're missing. RSS.
 
+**Token / context-management tooling (added 2026-04-21 — compression, codebase indexing, context sandboxing):**
+17. **rtk-ai/rtk** — `https://github.com/rtk-ai/rtk/releases` — CLI proxy (Rust binary) that intercepts shell/tool output and compresses before it reaches the Claude context window. Org-backed, 31k stars, multi-contributor, weekly commits. Orthogonal to `terse-mode`-style skills (those compress Claude's output; RTK compresses tool input). Track for new releases and hook-integration patterns.
+18. **tirth8205/code-review-graph** — `https://github.com/tirth8205/code-review-graph/releases` — Tree-sitter + SQLite knowledge graph exposed as MCP server. Computes blast-radius of changes so Claude reads only affected files. 12k stars, single-author but community forming (Discord, website), active. Relevant when a project codebase grows beyond in-context review.
+19. **mksglu/context-mode** — `https://github.com/mksglu/context-mode/releases` — MCP server that sandboxes tool output into SQLite FTS5, returning only pointers. Hooks into PreToolUse/PostToolUse/PreCompact. 8.5k stars, active. License is NOASSERTION — track for patterns, don't adopt as dep.
+20. **zilliztech/claude-context** — `https://github.com/zilliztech/claude-context/releases` — Semantic code search MCP (BM25 + dense vector embeddings), AST-based chunking, Merkle-tree incremental indexing. Backed by Zilliz (vector-DB company, venture-backed), 6.2k stars, MIT. Requires Zilliz Cloud dep — relevant for large monorepos. Worth tracking for AST-chunking patterns even if the dep is too heavy to adopt.
+
 The subagent should also research:
 
 - **Known gaps from `tasks/To Do Notes.md` "AI Upgrades" section** — research current state-of-the-art for any pending items (e.g. email/GDrive access, calendar integration).
