@@ -169,6 +169,88 @@ The subagent should also research:
 
 Merge the subagent's findings into Phase 3 recommendations under a dedicated `### External Opportunities` subsection (see format below).
 
+## Phase 2.5c: Per-Section Best-Practice Research (deep audit, added 2026-04-21)
+
+In parallel with Phases 2, 2.5a, and 2.5b, spawn one `researcher` subagent **per major META_ARCHITECTURE section** to produce focused best-practice research. Phase 2.5b scans curated source URLs broadly; this phase gives each section its own dedicated deep-dive and classifies each finding into a **trust gradient** that determines whether this audit run auto-applies the change or queues it for user approval.
+
+### Sections covered (one researcher fan-out per section)
+
+1. **Roles library** (`<workspace>/roles/`) — new canonical role types, schema refinements (frontmatter fields, Red Flags / Rationalization Table patterns), role-binding conventions
+2. **Workspace skills** (`<workspace>/.claude/skills/`) — new skill types, CSO description best practices, skill schema refinements, composition patterns
+3. **Custom subagents** (`<workspace>/.claude/agents/`) — auto-routing via description, prompt-engineering patterns, model selection, tool allowlists
+4. **Hooks** (`<home>/.claude/settings.json`) — new hook types (PreCompact, etc.), command-safety patterns, auto-formatter additions
+5. **Scheduled tasks** (`<home>/.claude/scheduled-tasks/` + OS scheduler) — orchestration patterns, idempotency, retry logic, logging
+6. **MCP servers** (`.mcp.json`, `claude mcp list`) — new first-party servers, plugin updates, connector availability. Cross-reference with Phase 2.5a bloat findings to avoid duplicate recs.
+7. **Memory system** (`<home>/.claude/projects/<workspace-id>/memory/`) — hygiene patterns, retrieval techniques, consolidation strategies
+8. **Task coordination layer** (`<workspace>/tasks/`) — heartbeat patterns, question-flow design, archive conventions
+
+### Subagent brief (same template for each)
+
+Pass to each `researcher` fan-out:
+
+```
+Section: <name>
+Current state: <paste relevant META_ARCHITECTURE section verbatim>
+
+Produce up to 5 actionable findings on best practices or emerging patterns
+from the last 1-3 months. For each finding provide:
+
+- Title (terse, imperative)
+- Rationale (one paragraph — why this matters for this specific workspace)
+- Impact estimate (high / medium / low)
+- **Tier classification** (Tier 1 / Tier 2 / Tier 3) per the rules below
+- Source URLs (primary-source preferred: Anthropic docs/changelog, obra/superpowers,
+  antfu/skills, wshobson/agents+commands, authoritative blogs). Apply researcher-
+  role fabrication guards + [observed]/[inferred]/[unverified] claim labels.
+- If Tier 1 or Tier 2: the concrete file edit needed (exact path + what to write).
+```
+
+### Trust gradient — tier rules
+
+Each finding must be tagged with a tier. These rules are non-negotiable:
+
+**Tier 1 — SAFE (auto-apply silently):**
+- New canonical role added to `<workspace>/roles/<name>.md` (pure, entity-free; doesn't bind to any project until the user explicitly wires it up in a `.claude/agents/` folder)
+- Defensive addition to the PreToolUse file-protection blocklist (new path matching an existing sensitive-category pattern — **never a removal**)
+- Memory hygiene prose refinement in `CLAUDE.md` or in a memory file (no behaviour change)
+- Role Red Flags / Rationalization Table additions (harder for roles to rationalize wrong behaviour)
+- Documentation, link, or typo fixes in always-loaded docs
+- Validator additions in `<workspace>/roles/_validate.py` or similar that strengthen existing checks
+
+**Tier 2 — AUTO-APPLY + PROMINENT SURFACING (the audit installs, but the user must know):**
+- New workspace skill at `<workspace>/.claude/skills/<name>/SKILL.md` — the user needs the invocation phrase
+- New Command Shortcut phrase in `<workspace>/CLAUDE.md` (verbal alias routing to an existing destination)
+- New workspace custom subagent with a CSO-style auto-routing description in `<workspace>/.claude/agents/<name>.md` — changes which subagent Claude spawns for certain requests
+- Role schema migration applied across the library
+
+**Tier 3 — REQUIRES APPROVAL (write to `To Do Notes.md` § Setup Review; never auto-apply):**
+- New MCP server (authentication, permissions, network exposure)
+- New scheduled task (background I/O, possible email sends, cron registration)
+- New hook (global tool-behaviour change)
+- Removal or relaxation of any existing safeguard (hook, rule, Iron Law, protection pattern)
+- Changes to Iron Laws or other non-negotiable rules
+- Credential-handling changes
+- Anything that removes or narrows an existing capability
+
+### Auto-apply logic
+
+1. Collect all findings across the 8 section fan-outs.
+2. De-duplicate: if two subagents surface the same recommendation, merge and keep the highest-tier classification (i.e. err toward caution).
+3. Rank by impact (high > medium > low), then by recency of source.
+4. **Rate-limit: apply at most 5 Tier-1-or-Tier-2 findings total per audit run.** Remaining Tier-1/Tier-2 findings go to Phase 3 output under `### Deferred (rate-limit)`.
+5. For each applied finding:
+   - **Tier 1:** create / edit the file silently. Add a brief one-line entry to Phase 3 under `### Auto-applied (Tier 1)`.
+   - **Tier 2:** create / edit the file. Add a prominent entry to Phase 3 under `### New capabilities this week` at the very top of the Setup Review section.
+6. If a Tier-1 or Tier-2 change touches `<workspace>/META_ARCHITECTURE.md` (e.g. a new skill row), **do NOT push to the public redacted repo.** Note in the Phase 3 report that `/wrap` must be invoked to sync. Weekly automated pushes to a public repo are not appropriate.
+7. **Tier 3 findings: never auto-apply.** Queue to `To Do Notes.md` § Setup Review under Quick Wins or Structural Improvements per effort.
+
+### Safety guardrails (hard stops on auto-apply)
+
+- If an auto-applied change breaks a validator (`roles/_validate.py` for role changes, or any equivalent), revert the change and downgrade the finding to Tier 3 with a note `auto-apply failed validation`.
+- If an auto-applied change would modify a file with a `git log` entry in the last 24 hours (user-edited recently), downgrade to Tier 3 to avoid concurrent-edit conflicts. Use `git log --since="24 hours ago" --name-only` if the workspace is a git repo; otherwise check `stat` mtime.
+- **Auto-apply is disabled entirely if Phase 2.6 (Security Review) produces more than 3 findings tagged `[CRITICAL]`.** Signal: the workspace needs security attention before any automated changes. Surface this at the top of the Phase 3 report.
+- Auto-apply is disabled entirely if this audit run would be the third consecutive run with auto-applies and the previous two weeks' Tier 2 additions still haven't been mentioned in any subsequent user activity (heuristic: grep the prior two weeks of `## Setup Review` blocks in `To Do Notes.md` for the skill/subagent names that were added, checking the rest of `To Do Notes.md` + `tasks/todo.md` for any references).
+
 ## Phase 2.6: Security Review
 
 Conduct a PRAGMATIC security review of the Claude workspace. Goal: surface real risk, not theoretical exposure. Write findings to `<workspace>/tasks/To Do Notes.md` under a `## Security` section (see Phase 3 format), tagged `[Security Review]`.
@@ -218,37 +300,65 @@ Merge findings into Phase 3 under a `## Security` section in `To Do Notes.md`:
 
 Cap at ~8 recommendations. Merge duplicates with the setup audit where they overlap (don't double-report).
 
-## Phase 3: Write Recommendations
+## Phase 3: Write Recommendations (tier-aware — updated 2026-04-21)
 
 1. Read `<workspace>/tasks/To Do Notes.md` to understand the current structure.
-2. Use the `Edit` tool to append a `## Setup Review` section **immediately before** the `## Completed` line.
-3. Format recommendations as follows:
+2. Use the `Edit` tool to replace the existing `## Setup Review` section (immediately before `## Completed`) with this run's findings.
+3. Format in the tiered structure below. Order matters — auto-applied changes surface at the top so the user sees new capabilities on first scan.
 
 ```markdown
-## Setup Review
+## Setup Review <YYYY-MM-DD>
 
-### Quick Wins
-- [Setup Review] <specific actionable recommendation>
-- [Setup Review] <specific actionable recommendation>
+### New capabilities this week (auto-applied — Tier 2)
 
-### Structural Improvements
-- [Setup Review] <specific actionable recommendation>
-- [Setup Review] <specific actionable recommendation>
+*Omit this block entirely if no Tier 2 items were applied.*
 
-### External Opportunities
+- **[Setup Review] [NEW SKILL] `<skill-name>`** — <one-line description>. Installed at `<path>`. Invoke via "<phrase>" / "/<skill-name>". ([source](URL))
+- **[Setup Review] [NEW SUBAGENT] `<agent-name>`** — <one-line description>. Installed at `<path>`. Auto-routes for <trigger conditions>. ([source](URL))
+- **[Setup Review] [NEW SHORTCUT] "<phrase>"** — routes to `<destination>`.
+- **NOTE:** META_ARCHITECTURE.md was updated. Run `/wrap` to mirror to the public redacted repo.
+
+### Auto-applied (Tier 1 — silent)
+
+*Omit this block if no Tier 1 items were applied.*
+
+- [Setup Review] <one-line description of the change applied + file path>
+- [Setup Review] <one-line description of the change applied + file path>
+
+### Quick Wins (Tier 3 — approval needed)
+
+- [Setup Review] <specific actionable recommendation, <30 min>
+- [Setup Review] <specific actionable recommendation, <30 min>
+
+### Structural Improvements (Tier 3 — approval needed)
+
+- [Setup Review] <specific actionable recommendation, requires planning>
+
+### External Opportunities (Tier 3 — approval needed, from Phase 2.5b)
+
 - [Setup Review] <integration/upgrade> — <one-line rationale> ([source](URL))
 - [Setup Review] <integration/upgrade> — <one-line rationale> ([source](URL))
+
+### Deferred (rate-limit cap hit this week)
+
+*Omit this block if the 5-per-week cap wasn't reached.*
+
+- [Setup Review] [<tier>] <title> — <brief rationale>. Will re-surface next audit if still relevant. ([source](URL))
+
+### Bloat Check (from Phase 2.5a)
+
+- [Setup Review] [Bloat] <finding> — <recommendation>
 ```
 
 ### Categorisation:
-- **Quick Wins**: Can be done in <30 minutes. Examples: add a file to protection hook, fill in a stub CLAUDE.md, clean up stale permissions.
-- **Structural Improvements**: Require planning or significant effort. Examples: add test suites, set up git, create new path-scoped rules, restructure agents.
+- **Quick Wins** (Tier 3): <30 minutes of user action. Examples: add a file to protection hook, fill in a stub CLAUDE.md, clean up stale permissions.
+- **Structural Improvements** (Tier 3): require planning or significant effort. Examples: add test suites, set up git, create new path-scoped rules.
 
 ### Quality bar:
-- Each recommendation must be specific enough to act on without further research.
-- Prioritize by impact (most impactful first within each category).
-- Maximum 15 recommendations total — focus on what matters most.
-- If a previous `## Setup Review` section exists, replace it entirely with fresh findings.
+- Every recommendation specific enough to act on without further research.
+- Prioritise by impact (most impactful first within each category).
+- **Maximum 15 recommendations total across all sections combined** (Tier 1 + Tier 2 + Tier 3 + Deferred + Bloat). The rate-limit already caps Tier 1+2 at 5 per run; this overall cap keeps the report scannable.
+- If a previous `## Setup Review` section exists, replace it entirely with fresh findings — do not accumulate.
 
 ## Final Output
 
