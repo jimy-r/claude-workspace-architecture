@@ -52,7 +52,7 @@ Make it specific.
 
 ## Scope boundaries
 
-- [ ] I have **not** touched any file listed in [CONTRIBUTING.md § Scope boundaries](../blob/main/CONTRIBUTING.md#scope-boundaries), **or** I have linked the Discussion / Issue that pre-agreed the change below.
+- [ ] I have **not** touched any file listed in [CONTRIBUTING.md § Scope boundaries](../CONTRIBUTING.md#scope-boundaries), **or** I have linked the Discussion / Issue that pre-agreed the change below.
 
 ## Related
 
