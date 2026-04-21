@@ -232,24 +232,47 @@ Each finding must be tagged with a tier. These rules are non-negotiable:
 - Credential-handling changes
 - Anything that removes or narrows an existing capability
 
+### Tier classification — default-to-caution rule (strengthened 2026-04-21 after first-run drift)
+
+Tier rules enumerate SPECIFIC change shapes. Any change that doesn't exactly match a Tier 1 or Tier 2 bullet is **Tier 3 by default** — no judgment-call drift. In particular:
+
+- **"Content rewrite of an existing SKILL.md" is NOT Tier 1 or Tier 2.** Tier 2 is adding a NEW SKILL.md file. Modifying the procedural content of an already-installed skill changes operational behaviour and is Tier 3.
+- **"Feature addition to an existing Python helper" is NOT Tier 1 or Tier 2.** Adding new constants, expanding a configurable list, or adding logic is Tier 3. Only pure doc / typo fixes inside docstrings or comments qualify as Tier 1.
+- **"Refinement of an existing scheduled-task orchestrator" is Tier 3.** Those files change what the automation does on a cron schedule — user-visible behaviour.
+- If a finding's natural phrasing starts with *"improve X"*, *"expand Y"*, *"rewrite Z"*, or *"update the <existing-thing>"*, it is Tier 3. Tier 1 / Tier 2 phrasing is *"add new X"* / *"file not previously protected"* / *"documentation typo in Y"*.
+
+When in doubt, classify Tier 3.
+
 ### Auto-apply logic
 
 1. Collect all findings across the 8 section fan-outs.
 2. De-duplicate: if two subagents surface the same recommendation, merge and keep the highest-tier classification (i.e. err toward caution).
 3. Rank by impact (high > medium > low), then by recency of source.
 4. **Rate-limit: apply at most 5 Tier-1-or-Tier-2 findings total per audit run.** Remaining Tier-1/Tier-2 findings go to Phase 3 output under `### Deferred (rate-limit)`.
-5. For each applied finding:
-   - **Tier 1:** create / edit the file silently. Add a brief one-line entry to Phase 3 under `### Auto-applied (Tier 1)`.
+5. For each applied finding, **before writing**, run the per-write checklist in the Safety guardrails section below. If any check fails, abort THIS write, downgrade THIS finding to Tier 3, and log to Phase 3 under `### Safety guardrail activity`. Do not attempt the same write again this run.
+6. For each successful application:
+   - **Tier 1:** create / edit the file silently. Add a one-line entry to Phase 3 under `### Auto-applied (Tier 1)` showing: file path + character delta + pre-write mtime.
    - **Tier 2:** create / edit the file. Add a prominent entry to Phase 3 under `### New capabilities this week` at the very top of the Setup Review section.
-6. If a Tier-1 or Tier-2 change touches `<workspace>/META_ARCHITECTURE.md` (e.g. a new skill row), **do NOT push to the public redacted repo.** Note in the Phase 3 report that `/wrap` must be invoked to sync. Weekly automated pushes to a public repo are not appropriate.
-7. **Tier 3 findings: never auto-apply.** Queue to `To Do Notes.md` § Setup Review under Quick Wins or Structural Improvements per effort.
+7. If a Tier-1 or Tier-2 change touches `<workspace>/META_ARCHITECTURE.md` (e.g. a new skill row), **do NOT push to the public redacted repo.** Note in the Phase 3 report that `/wrap` must be invoked to sync. Weekly automated pushes to a public repo are not appropriate.
+8. **Tier 3 findings: never auto-apply.** Queue to `To Do Notes.md` § Setup Review under Quick Wins or Structural Improvements per effort.
+9. **Reporting invariant (added 2026-04-21):** every file this audit run modifies MUST appear in the Phase 3 report under `### Auto-applied (Tier 1)`, `### New capabilities this week` (Tier 2), or `### Safety guardrail activity` (write attempted then aborted). Maintain a running write-log during the audit and cross-check it against the Phase 3 sections before finalising. If the write-log shows file modifications not reflected in Phase 3, the audit has mis-reported and must be re-run — report the discrepancy at the top of the Setup Review block.
 
 ### Safety guardrails (hard stops on auto-apply)
 
-- If an auto-applied change breaks a validator (`roles/_validate.py` for role changes, or any equivalent), revert the change and downgrade the finding to Tier 3 with a note `auto-apply failed validation`.
-- If an auto-applied change would modify a file with a `git log` entry in the last 24 hours (user-edited recently), downgrade to Tier 3 to avoid concurrent-edit conflicts. Use `git log --since="24 hours ago" --name-only` if the workspace is a git repo; otherwise check `stat` mtime.
-- **Auto-apply is disabled entirely if Phase 2.6 (Security Review) produces more than 3 findings tagged `[CRITICAL]`.** Signal: the workspace needs security attention before any automated changes. Surface this at the top of the Phase 3 report.
-- Auto-apply is disabled entirely if this audit run would be the third consecutive run with auto-applies and the previous two weeks' Tier 2 additions still haven't been mentioned in any subsequent user activity (heuristic: grep the prior two weeks of `## Setup Review` blocks in `To Do Notes.md` for the skill/subagent names that were added, checking the rest of `To Do Notes.md` + `tasks/todo.md` for any references).
+**Per-write checklist — runs IMMEDIATELY before EVERY Tier-1/Tier-2 Write or Edit tool call, not just at orchestrator-decision time:**
+
+1. **24h mtime check.** `stat` the target file (if exists). If mtime is within 24 hours of now, ABORT the write. Downgrade this finding to Tier 3. Log `[24h-mtime <timestamp>]` in `### Safety guardrail activity`. Also check `git log --since="24 hours ago" --name-only -- <path>` if the workspace is a git repo.
+2. **Write allowlist check.** Target path must match the Phase 2.5c write allowlist (see Rules section at top of this file — Tier 1 / Tier 2 specific-file list). If it doesn't, ABORT — downgrade to Tier 3, log `[allowlist-miss]`.
+3. **Post-write validator check.** After the write completes, if the edited file falls under a validator's scope (e.g. `<workspace>/roles/*.md` → `roles/_validate.py`), run the validator. If it exits non-zero, REVERT the change (restore prior content), downgrade to Tier 3, log `[validator-fail]`.
+
+**Run-wide stops — checked once at Phase 2.5c start, disable ALL auto-apply this run:**
+
+- **CRITICAL security count:** if Phase 2.6 produces more than 3 `[CRITICAL]` findings, disable auto-apply entirely. Signal: workspace needs security attention before any automated changes. Surface at the top of the Phase 3 report.
+- **Ignored-additions heuristic:** if this audit run would be the third consecutive run with Tier-2 auto-applies, and the previous two weeks' Tier-2 additions (skill names, subagent names, shortcut phrases) do not appear anywhere in `tasks/To Do Notes.md`, `tasks/todo.md`, or the last 14 days of `tasks/scheduled-logs/*` outside the original Setup Review blocks, disable auto-apply. Heuristic: the user hasn't noticed prior additions — stop adding.
+
+**Subagent boundary (added 2026-04-21):**
+
+- `researcher` subagents fanned out in Phase 2.5c are **READ-ONLY by role**. They RETURN proposed edits as data (exact path + content) in their finding payload. They do NOT write files themselves. The audit orchestrator is the sole writer and runs the per-write checklist on each edit. If a fan-out subagent's tool list somehow includes `Write` or `Edit`, that is a configuration drift — flag it in `### Safety guardrail activity` and decline to run until fixed.
 
 ## Phase 2.6: Security Review
 
