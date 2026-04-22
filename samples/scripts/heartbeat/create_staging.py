@@ -122,15 +122,35 @@ def _make_staging_folder(slug: str, target: Path, dry_run: bool = False) -> Path
     return staging
 
 
+_FORBIDDEN_SLUGS = {"main", "master", "develop", "head", "origin", ""}
+
+
+def _validate_slug(slug: str) -> None:
+    """
+    Defence-in-depth: refuse slugs that could collide with protected
+    branch names or accidentally name a worktree in a dangerous way.
+    """
+    s = slug.strip().lower()
+    if s in _FORBIDDEN_SLUGS:
+        raise ValueError(f"Refusing forbidden slug: {slug!r}")
+    if s.startswith("origin/") or s.startswith("upstream/"):
+        raise ValueError(f"Refusing remote-prefixed slug: {slug!r}")
+    if "/" in s or ".." in s or s.startswith("."):
+        raise ValueError(f"Slug must be a simple identifier, got: {slug!r}")
+
+
 def create_staging(slug: str, target: Path, dry_run: bool = False) -> Path:
     """
     Create a sandbox for heartbeat work. Returns the staging path.
 
     Raises:
+        ValueError — slug is forbidden or malformed (see _validate_slug)
         FileNotFoundError — target doesn't exist
         FileExistsError — staging already exists (user must clean up)
         RuntimeError — git-worktree creation failed
     """
+    _validate_slug(slug)
+
     if not target.exists():
         raise FileNotFoundError(f"Target path does not exist: {target}")
 
