@@ -2,6 +2,19 @@
 
 A blueprint for a personal [Claude Code](https://claude.com/claude-code) workspace — personas, routines, hooks, skills, MCP servers, memory, and task coordination.
 
+## Start here
+
+Four paths, pick by time and setup:
+
+- **5-minute skim** — this README, then [META_ARCHITECTURE.md](META_ARCHITECTURE.md) §1 *Layers at a glance* + §11 *Project layout*. Enough to decide if it's worth going deeper.
+- **See how it actually runs** — [WORKFLOW.md](WORKFLOW.md) describes one person's day-to-day use: session discipline, entry-point choices, how tasks flow from thought to done.
+- **Build your own** — walk [ADOPTION.md](ADOPTION.md) (5 steps, minimum-viable at each). Fork [`samples/`](samples/) as you go.
+- **Let your agent tour it** — clone, `cd` in, launch Claude Code, then prompt:
+  > *"Tour this repo. Read META_ARCHITECTURE.md, then WORKFLOW.md, then PATTERNS_BOARD.md, then scan samples/. Summarise the patterns most applicable to my workspace."*
+  The repo's [`CLAUDE.md`](CLAUDE.md) auto-loads on session start, so your agent inherits the conventions before it answers.
+
+If you know you want to contribute, jump to [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Three ways in
 
 Following the [Diátaxis](https://diataxis.fr/) framing, the repo's docs split across four quadrants:
