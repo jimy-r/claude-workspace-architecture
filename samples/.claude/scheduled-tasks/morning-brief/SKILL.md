@@ -132,6 +132,26 @@ Read `<workspace>/tasks/To Do Notes.md`. List **every active bullet** grouped by
 
 Expected sections (include only those with active bullets): <project-platform>, Books / Media, <creative-project> Book, AI Upgrades, Personal Projects, Other, Structural Improvements, Open Source, Finance & Admin, Health, Audit Recommendations, Setup Review <latest date>, Security. Any new `##` sections that appear in the source file are auto-included.
 
+### Awaiting your review (NEW — added 2026-04-22, heartbeat-PR-agent flow)
+
+Read `<workspace>/tasks/HEARTBEAT_REVIEWS.md`. Find all entries under `## Active reviews` with status `pending` or `reminded`. Count them.
+
+For each entry, parse the line format: `- YYYY-MM-DD | <status> | <task-slug> | <staging-location> | <one-line summary>`.
+
+Surface up to 10 entries. Flag `reminded` entries (≥ 7 days old, surfaced because they've been sitting) with a `⚠` marker so they stand out from fresh items.
+
+Skip the section entirely (omit the `## Awaiting your review` heading) if zero entries.
+
+Format:
+```
+## Awaiting your review (N ready to integrate or reject)
+
+- <YYYY-MM-DD> **<task-slug>** — <one-line summary>. Staging: `<path>`
+- ⚠ <YYYY-MM-DD> **<task-slug>** — <one-line summary>. Staging: `<path>`  *(reminded, 7+ days)*
+```
+
+**Why this section exists:** the heartbeat-PR-agent flow builds speculative work on `has-default` tasks and parks it for review. Surfacing these concrete artifacts in the morning brief keeps the review queue from drifting — the user sees "here's what I built, want to merge or reject?" alongside the rest of the day's context.
+
 ### Open questions (NEW — added 2026-04-19)
 
 Read `<workspace>/tasks/To Do Questions.md`. Find all blocks with `Status: AWAITING RESPONSE`. Count them. List the titles of up to 5, newest first (use the `Date posted` field or document order).
@@ -182,6 +202,10 @@ Write to `<workspace>/tasks/morning_brief_<YYYY-MM-DD>.md`:
 ## Your task list
 
 [as per above]
+
+## Awaiting your review
+
+[as per "Awaiting your review" section above — 1 line per entry, ⚠ flag for reminded ≥7 days; omit the whole heading if zero entries]
 
 ## Open questions
 
