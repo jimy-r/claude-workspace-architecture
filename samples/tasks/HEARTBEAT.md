@@ -127,6 +127,31 @@ When an entry is `REJECTED`, append to `tasks/HEARTBEAT_REJECTIONS.md` under `##
 
 Pattern reference: Architecture Decision Records (ADR — Michael Nygard). Same rhythm as Dependabot's ignored-versions list or a research notebook's failed-approaches log.
 
+## Idle-cycle observations (added 2026-04-22)
+
+When heartbeat has nothing task-shaped to do this cycle, use the remaining capacity to surface local operational patterns the user wouldn't otherwise notice. Cheap local analysis only — no subagents, no web fetches, no research fan-out. That's the weekly `upgrade-audit`'s job.
+
+**What the helper surfaces (`scripts/heartbeat/idle_observations.py`):**
+
+- **Rejection clusters** — 3+ rejection blocks in the last 30 days share a keyword in their "Lesson for future attempts" line → classifier heuristic may need tightening.
+- **Stale staging** — any `<slug>_staging/` folder older than 10 days with no recent mtime change → integrate / reject / delete candidate.
+- **Stale reference memory** — any `reference_*.md` with `last_verified > 60 days` in its frontmatter → verify-and-bump or prune.
+- **Review-queue batching** — 5+ pending reviews where 3+ share a keyword in their task slug → batch integration may be faster than one-by-one.
+
+**Gates (self-enforced by the helper):**
+
+- Queue cap: if `## AI Upgrades` already has 3 open `[Idle Observation]` bullets, produce zero new ones until some are actioned.
+- Dedupe window: if the same observation shape was surfaced in the last 30 days (open or closed), skip.
+- One per cycle: the helper returns a single observation even when multiple patterns match — priority order is rejection > staging > memory > batching.
+
+**Not in scope for idle observations:**
+
+- Web-derived suggestions (e.g. "consider adopting X framework") — that's the weekly `upgrade-audit`.
+- Subagent fan-outs — too expensive for 2-hour cadence.
+- Anything derived from files the heartbeat doesn't already read.
+
+---
+
 ## Additional Checks (every cycle)
 
 Two health checks run alongside the classify-then-act cycle:
@@ -268,7 +293,8 @@ Do not delete staging folders or worktrees. The user will clean them up after in
 14. **Never push to `main` or `master`.** Feature branches + PRs only. No force-pushes. No `git reset --hard origin/main`. The PreToolUse Bash hook (`scripts/security/check_bash_command.py`) enforces this independently, but the rule stands as policy — the hook is defence-in-depth, not primary.
 15. **Cap the review queue at 10 items.** At cycle start, count `pending` + `reminded` entries under `## Active reviews` in `tasks/HEARTBEAT_REVIEWS.md`. If the count is ≥ 10, pause all new `has-default` builds this cycle — classify every new task as `needs-intent` with the note "Review queue is at capacity (≥10 unintegrated items); please drain via the `review-queue` skill before I build more." Resume normal classification when the queue drops below 10. Prevents runaway speculative building when the user is away or the review queue gets stuck.
 16. **Honour dry-run mode.** At cycle start, check for `tasks/.heartbeat-dry-run`. If present, you are in dry-run mode: classify tasks normally, BUT for every `has-default` classification do NOT execute the build, do NOT write to `HEARTBEAT_REVIEWS.md`, and do NOT create any staging folder or worktree. Instead, append a line to `tasks/heartbeat-dry-run.log` with timestamp + task slug + classification + the sandbox path that WOULD have been created + the one-line summary of what WOULD have been built. `needs-intent` and `out-of-scope` classifications still post questions as normal. User removes the marker file to switch to production mode.
+17. **Run idle observations when capacity allows.** At cycle end, if (a) no new tasks were classified this cycle, (b) no answered questions were actioned, (c) review queue count < 3, and (d) roles validator + stale-CONTEXT.md scan + memory lint all passed, then run `python <workspace>/scripts/heartbeat/idle_observations.py`. If it outputs a bullet (not the literal string "no observation"), append that bullet to `tasks/To Do Notes.md` under `## AI Upgrades`, newest-first within that section. The script self-limits: queue cap of 3 open `[Idle Observation]` items, 30-day dedupe on observation shape. If the script exits 2 (queue cap reached), log that in the cycle summary and move on — do NOT delete existing observations to make room.
 
 ---
 
-*Last updated: 2026-04-22 — build-first flow (classify-then-act), rejection history primitive, worktree-based sandbox for git-scope work; security envelope added (Bash safety hook + git-push-to-main ban + review-queue cap + dry-run mode).*
+*Last updated: 2026-04-22 — build-first flow (classify-then-act), rejection history primitive, worktree-based sandbox for git-scope work; security envelope added (Bash safety hook + git-push-to-main ban + review-queue cap + dry-run mode); idle-cycle observations phase added (cheap local pattern surfacing when no task work this cycle).*

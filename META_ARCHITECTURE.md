@@ -399,7 +399,7 @@ Supporting folders:
 | Task coordination | `<workspace>/tasks/` |
 | Older completed reviews (archive) | `<workspace>/tasks/todo-archive.md` |
 | Closed question blocks (archive) | `<workspace>/tasks/answered/To Do Questions.md` |
-| Heartbeat-PR-agent primitives (classifier, rejection grep, sandbox creator) | `<workspace>/scripts/heartbeat/` |
+| Heartbeat-PR-agent primitives (classifier, rejection grep, sandbox creator, review-queue depth, idle observations) | `<workspace>/scripts/heartbeat/` |
 | Heartbeat review queue (built work awaiting user integration) | `<workspace>/tasks/HEARTBEAT_REVIEWS.md` |
 | Heartbeat rejection log (ADR-style durable memory) | `<workspace>/tasks/HEARTBEAT_REJECTIONS.md` |
 | Google OAuth creds + tokens (hook-protected) | `<home>/.claude/google-auth/` |
