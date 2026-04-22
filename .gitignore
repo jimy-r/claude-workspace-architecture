@@ -1,10 +1,22 @@
+# Secrets and env (defense-in-depth — the repo has none of these, keep it that way)
+.env*
+credentials*
+secrets*
+*.key
+*.pem
+
+# OS / temp
 .DS_Store
 Thumbs.db
 *.bak
 *.tmp
 *.swp
+
+# Python
 *.pyc
+__pycache__/
+.ruff_cache/
+
+# IDE
 .vscode/
 .idea/
-.ruff_cache/
-__pycache__/
