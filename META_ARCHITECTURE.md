@@ -440,7 +440,6 @@ Drawn from the live task list and implementation-plan file as of 2026-04-19. Ite
 - **Bittorrent integration** — scope TBD (media server stack / public-domain ebook fetcher / general download manager)
 - **Home integration** — scope TBD (Home Assistant or direct smart-home device integration; potential tie-in with health data — sleep-room temp, morning light)
 - **Job scanner** — scope TBD (career scanner across major boards, grants/RFP scanner, or similar)
-- **Subagent-driven-development + dispatching-parallel-agents skills** — install from an open-source "superpowers" skill pack to codify a subagent-first philosophy
 - **`PreCompact` hook** — add to selected project settings to prevent loss of in-flight state during long tasks
 - **1-hour prompt-cache TTL env var** — set in launcher scripts for 1-hour cache TTL vs default 5-min (materially cuts token spend)
 
